@@ -10,6 +10,7 @@ pub var originalRunOpcode: emu.RunOpcodeT = undefined;
 pub var originalRunFrame: emu.RunFrameT = undefined;
 pub var originalGameTick: emu.GameTickT = undefined;
 pub var originalWriteInput: emu.WriteInputT = undefined;
+pub var originalEndScene: std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndScene) = undefined;
 
 pub fn runOpcode() callconv(.C) void {
     return originalRunOpcode();
@@ -29,6 +30,10 @@ pub fn gameTick() callconv(.C) void {
 pub fn writeInput(ipt: u32) callconv(.C) void {
     originalWriteInput(ipt);
     command_recorder.process();
+}
+
+pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
+    return originalEndScene(device);
 }
 
 fn checkInputs() void {
