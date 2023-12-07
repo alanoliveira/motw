@@ -28,6 +28,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    lib.addModule("zigwin32", zigwin32.module("zigwin32"));
     lib.linkLibC();
 
     // This declares intent for the library to be installed into the standard

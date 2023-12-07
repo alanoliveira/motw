@@ -1,10 +1,25 @@
 const std = @import("std");
-const testing = std.testing;
+const win = @import("win32.zig");
 
-export fn add(a: i32, b: i32) i32 {
-    return a + b;
+pub export fn DllMain(_: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
+    switch (reason) {
+        win.DLL_PROCESS_ATTACH => {
+            initialize();
+        },
+        win.DLL_PROCESS_DETACH => {
+            deinitialize();
+        },
+        else => {},
+    }
+
+    return win.TRUE;
 }
 
-test "basic add functionality" {
-    try testing.expect(add(3, 7) == 10);
+fn initialize() void {
+    _ = win.AllocConsole();
+    errdefer _ = win.FreeConsole();
+}
+
+fn deinitialize() void {
+    _ = win.FreeConsole();
 }
