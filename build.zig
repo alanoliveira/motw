@@ -20,6 +20,26 @@ pub fn build(b: *std.Build) void {
 
     const zigwin32 = b.dependency("zigwin32", .{});
 
+    const minhook = b.addStaticLibrary(.{
+        .name = "minhook",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    var minhook_src = [_][]const u8{
+        "./vendor/minhook/src/buffer.c",
+        "./vendor/minhook/src/hook.c",
+        "./vendor/minhook/src/trampoline.c",
+        "./vendor/minhook/src/hde/hde32.c",
+        "./vendor/minhook/src/hde/hde64.c",
+    };
+    minhook.addCSourceFiles(.{
+        .files = &minhook_src,
+        .flags = &.{"-fno-sanitize=undefined"}, // without this option Minhook crashes when hooking some external function
+    });
+    minhook.linkLibC();
+    b.installArtifact(minhook);
+
     const lib = b.addSharedLibrary(.{
         .name = "motw",
         // In this case the main source file is merely a path, however, in more
@@ -29,6 +49,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     lib.addModule("zigwin32", zigwin32.module("zigwin32"));
+    lib.addIncludePath(.{ .path = "./vendor/minhook/include/" });
+    lib.linkLibrary(minhook);
     lib.linkLibC();
 
     // This declares intent for the library to be installed into the standard
