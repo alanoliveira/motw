@@ -41,6 +41,34 @@ const STT_BANK_MAP_OFFSET = 0x139D38;
 const BANK_SIZE = 0x10_0000;
 const IS_EMULATION_RUNNING_OFFSET = 0x11BAF4;
 const FRAME_COUNTER_OFFSET = 0x1E4770;
+const USER_RAM_OFFSET = 0x2B6000;
+const PAL_OFFSET = 0x241000;
+const VRAM_OFFSET = 0x286000;
+
+// Probably I'm missing something.
+// @TODO: replace it by the emulator save state when I find the address.
+pub const State = struct {
+    user_ram: [0x10000]u8,
+    cpu: [0x300]u8,
+    vram: [0x10000]u8,
+    pallette: [0x10000]u8,
+
+    pub fn save() State {
+        var state: State = undefined;
+        @memcpy(&state.user_ram, base_ptr + USER_RAM_OFFSET);
+        @memcpy(&state.vram, base_ptr + VRAM_OFFSET);
+        @memcpy(&state.cpu, base_ptr + CPU_REGS_OFFSET);
+        @memcpy(&state.pallette, base_ptr + PAL_OFFSET);
+        return state;
+    }
+
+    pub fn load(self: *const State) void {
+        @memcpy(base_ptr + USER_RAM_OFFSET, &self.user_ram);
+        @memcpy(base_ptr + VRAM_OFFSET, &self.vram);
+        @memcpy(base_ptr + CPU_REGS_OFFSET, &self.cpu);
+        @memcpy(base_ptr + PAL_OFFSET, &self.pallette);
+    }
+};
 
 var base_ptr: [*]u8 = undefined;
 

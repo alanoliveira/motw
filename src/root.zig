@@ -4,6 +4,7 @@ const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
 const input = @import("input.zig");
 const settings = @import("settings.zig");
+const save_state = @import("save_state.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 var originalRunOpcode: emu.RunOpcodeT = undefined;
@@ -104,17 +105,26 @@ fn shutdown() void {
     };
 }
 
-fn hookedRunOpcode() callconv(.C) void {
-    return originalRunOpcode();
-}
-
-fn hookedRunFrame() callconv(.C) u32 {
+fn checkInputs() void {
     input.poll();
 
     if (input.isPressed(.{ .Keyboard = .F7 })) {
         defer shutdown();
     }
+    if (input.isPressed(.{ .Keyboard = .F3 })) {
+        save_state.save(settings.save_state_slot);
+    }
+    if (input.isPressed(.{ .Keyboard = .F4 })) {
+        save_state.load(settings.save_state_slot);
+    }
+}
 
+fn hookedRunOpcode() callconv(.C) void {
+    return originalRunOpcode();
+}
+
+fn hookedRunFrame() callconv(.C) u32 {
+    checkInputs();
     return originalRunFrame();
 }
 
