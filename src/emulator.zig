@@ -9,6 +9,7 @@ const std = @import("std");
 
 pub const RunOpcodeT: type = *fn () callconv(.C) void;
 pub const RunFrameT: type = *fn () callconv(.C) u32;
+pub const GameTickT: type = *fn () callconv(.C) void;
 
 pub const CpuRegister = enum(u32) {
     D0 = 0,
@@ -33,6 +34,7 @@ pub const CpuRegister = enum(u32) {
 
 const RUN_OPCODE_FN_OFFSET = 0x5BAE0;
 const RUN_FRAME_FN_OFFSET = 0xBC90;
+const GAME_TICK_FN_OFFSET = 0x4700;
 const CPU_REGS_OFFSET = 0xEE6820;
 const DYN_BANK_MAP_OFFSET = 0xEE6994;
 const STT_BANK_MAP_OFFSET = 0x139D38;
@@ -52,6 +54,10 @@ pub fn getRunOpcodePtr() RunOpcodeT {
 
 pub fn getRunFramePtr() RunFrameT {
     return @ptrCast(base_ptr + RUN_FRAME_FN_OFFSET);
+}
+
+pub fn getGameTickPtr() RunFrameT {
+    return @ptrCast(base_ptr + GAME_TICK_FN_OFFSET);
 }
 
 /// Returns true if the emulation is running (the game is not paused or in main menu).

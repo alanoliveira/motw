@@ -3,10 +3,12 @@ const win = @import("win32.zig");
 const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
 const input = @import("input.zig");
+const settings = @import("settings.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 var originalRunOpcode: emu.RunOpcodeT = undefined;
 var originalRunFrame: emu.RunFrameT = undefined;
+var originalGameTick: emu.GameTickT = undefined;
 
 pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
     switch (reason) {
@@ -51,6 +53,11 @@ fn initialize() !void {
 
     mh.createHook(emu.getRunFramePtr(), &hookedRunFrame, @ptrCast(&originalRunFrame)) catch |err| {
         std.debug.print("Error on hooking RunFrame\n", .{});
+        return err;
+    };
+
+    mh.createHook(emu.getGameTickPtr(), &hookedGameTick, @ptrCast(&originalGameTick)) catch |err| {
+        std.debug.print("Error on hooking GameTick\n", .{});
         return err;
     };
 
@@ -109,4 +116,10 @@ fn hookedRunFrame() callconv(.C) u32 {
     }
 
     return originalRunFrame();
+}
+
+fn hookedGameTick() callconv(.C) void {
+    const frame = emu.getFrameCount();
+    if (frame % settings.slowdown_divider == 0)
+        originalGameTick();
 }
