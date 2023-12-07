@@ -62,10 +62,22 @@ pub const XINPUT_VIRTUAL_KEY = enum(u16) {
     _,
 };
 
+const d3dx9 = @cImport({
+    @cInclude("d3dx9.h");
+});
+pub const ID3DXSprite = d3dx9.ID3DXSprite;
+pub var D3DXCreateSprite: *const @TypeOf(d3dx9.D3DXCreateSprite) = undefined;
+pub const D3DXSPRITE_DONOTSAVESTATE = d3dx9.D3DXSPRITE_DONOTSAVESTATE;
+pub const D3DXVECTOR3 = d3dx9.D3DXVECTOR3;
+
 pub fn initialize() void {
     const ll = @import("zigwin32").system.library_loader;
 
     const xinput_dll = ll.GetModuleHandleA("xinput1_3.dll") orelse @panic("Failed to load xinput1_3.dll");
     defer _ = ll.FreeLibrary(xinput_dll);
     XInputGetKeystroke = @ptrCast(ll.GetProcAddress(xinput_dll, "XInputGetKeystroke") orelse @panic("Failed to load XInputGetKeystroke"));
+
+    const d3dx9_dll = ll.GetModuleHandleA("d3dx9_43.dll") orelse @panic("Failed to load d3dx9_43.dll");
+    defer _ = ll.FreeLibrary(d3dx9_dll);
+    D3DXCreateSprite = @ptrCast(ll.GetProcAddress(d3dx9_dll, "D3DXCreateSprite") orelse @panic("Failed to load D3DXCreateSprite"));
 }

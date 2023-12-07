@@ -51,6 +51,7 @@ pub fn build(b: *std.Build) void {
     lib.addModule("zigwin32", zigwin32.module("zigwin32"));
     lib.addIncludePath(.{ .path = "./vendor/minhook/include/" });
     lib.linkLibrary(minhook);
+    lib.addIncludePath(.{ .path = "./vendor/font8x8/" });
     lib.linkLibC();
 
     // This declares intent for the library to be installed into the standard

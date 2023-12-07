@@ -1,6 +1,7 @@
 const Self = @This();
 const std = @import("std");
 const win = @import("win32.zig");
+const Font8x8 = @import("font8x8.zig");
 
 pub const SCREEN_WIDTH = 398;
 pub const SCREEN_HEIGHT = 224;
@@ -69,6 +70,7 @@ original_settings: D3D9Settings,
 original_render_target: ?*win.IDirect3DSurface9,
 device: *win.IDirect3DDevice9,
 texture: ?*win.IDirect3DTexture9,
+font8x8: ?Font8x8,
 
 pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
     if (self.device != device) {
@@ -85,6 +87,9 @@ pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
             &self.texture,
             null,
         );
+
+        if (self.font8x8) |*font8x8| _ = font8x8.deinitialize();
+        self.font8x8 = try Font8x8.initialize(device);
     }
 
     self.original_settings = try D3D9Settings.extract(self.device);
@@ -207,6 +212,23 @@ pub fn drawRectOutline(self: *const Self, x1: i32, y1: i32, x2: i32, y2: i32, co
     ) != win.S_OK) {
         std.debug.print("Error on drawRectOl\n", .{});
     }
+}
+
+pub fn drawText(self: *const Self, text: []const u8, x: i32, y: i32, color: u32) void {
+    const screen_x = worldToScreen(x);
+    const screen_y = worldToScreen(y);
+
+    if (self.font8x8) |*f| f.drawText(text, screen_x, screen_y, color);
+}
+
+pub fn drawTextFmt(self: *const Self, comptime fmt: []const u8, args: anytype, x: i32, y: i32, color: u32) void {
+    var buffer: [1024]u8 = .{0} ** 1024;
+    const text = std.fmt.bufPrint(@ptrCast(&buffer), fmt, args) catch {
+        std.debug.print("Failed to format string\n", .{});
+        return;
+    };
+
+    self.drawText(text, x, y, color);
 }
 
 fn worldToScreen(value: i32) f32 {
