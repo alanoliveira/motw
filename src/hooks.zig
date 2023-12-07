@@ -37,6 +37,8 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
     renderer.initialize(device) catch return originalEndScene(device);
 
+    @import("hud_enhancement.zig").render(&renderer);
+
     renderer.deinitialize() catch {};
     return originalEndScene(device);
 }

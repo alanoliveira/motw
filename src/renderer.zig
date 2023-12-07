@@ -5,6 +5,7 @@ const Font8x8 = @import("font8x8.zig");
 
 pub const SCREEN_WIDTH = 398;
 pub const SCREEN_HEIGHT = 224;
+pub const GLYPH_SIZE = 8 / SCALE;
 const SCALE = 2.0;
 
 const D3D9Settings = struct {
@@ -219,6 +220,10 @@ pub fn drawText(self: *const Self, text: []const u8, x: i32, y: i32, color: u32)
     const screen_y = worldToScreen(y);
 
     if (self.font8x8) |*f| f.drawText(text, screen_x, screen_y, color);
+
+    // font rendering is messing up the render state, so we need to restore it
+    // @TODO: find a better way to do this
+    D3D9Settings.CUSTOM_SETTINGS.apply(self.device) catch {};
 }
 
 pub fn drawTextFmt(self: *const Self, comptime fmt: []const u8, args: anytype, x: i32, y: i32, color: u32) void {
