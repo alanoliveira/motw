@@ -3,12 +3,14 @@ const win = @import("win32.zig");
 const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
 
+var SELF_HANDLE: win.HANDLE = undefined;
 var originalRunOpcode: emu.RunOpcodeT = undefined;
 var originalRunFrame: emu.RunFrameT = undefined;
 
-pub export fn DllMain(_: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
+pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
     switch (reason) {
         win.DLL_PROCESS_ATTACH => {
+            SELF_HANDLE = handle;
             initialize() catch return win.FALSE;
         },
         win.DLL_PROCESS_DETACH => {
@@ -59,18 +61,35 @@ fn initialize() !void {
 }
 
 fn deinitialize() !void {
-    defer _ = win.FreeConsole();
-
-    std.debug.print("Disabling hooks\n", .{});
-    mh.disableHook(mh.ALL_HOOKS) catch |err| {
-        std.debug.print("Error on disabling hooks\n", .{});
-        return err;
-    };
+    std.time.sleep(100 * std.time.ns_per_ms); // wait to make sure no hook is running anymore
 
     std.debug.print("Uninitializing minhook\n", .{});
     mh.uninitialize() catch |err| {
         std.debug.print("Error on uninitializing minhook\n", .{});
         return err;
+    };
+
+    _ = win.FreeConsole();
+}
+
+fn shutdown() void {
+    std.debug.print("Shutting down\n", .{});
+
+    std.debug.print("Disabling hooks\n", .{});
+    mh.disableHook(mh.ALL_HOOKS) catch {
+        std.debug.print("Error on disabling hooks\n", .{});
+    };
+
+    // run in a separated thread to not uninitialize minhook inside a hook.
+    _ = win.CreateThread(
+        null,
+        0,
+        @ptrCast(&win.FreeLibrary),
+        SELF_HANDLE,
+        .THREAD_CREATE_RUN_IMMEDIATELY,
+        null,
+    ) orelse {
+        std.debug.print("Error on creating FreeLibrary thread\n", .{});
     };
 }
 
@@ -79,5 +98,9 @@ fn hookedRunOpcode() callconv(.C) void {
 }
 
 fn hookedRunFrame() callconv(.C) u32 {
+    if (!emu.isEmulationRunning()) {
+        defer shutdown();
+    }
+
     return originalRunFrame();
 }
