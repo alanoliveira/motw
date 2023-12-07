@@ -1,4 +1,5 @@
 const std = @import("std");
+const util = @import("util.zig");
 
 // IMPORTANT:
 // The emulator was written for x86 architecture, that uses little endian 32-bit, but
@@ -10,6 +11,7 @@ const std = @import("std");
 pub const RunOpcodeT: type = *fn () callconv(.C) void;
 pub const RunFrameT: type = *fn () callconv(.C) u32;
 pub const GameTickT: type = *fn () callconv(.C) void;
+pub const WriteInputT: type = *fn (u32) callconv(.C) void;
 
 pub const CpuRegister = enum(u32) {
     D0 = 0,
@@ -35,6 +37,7 @@ pub const CpuRegister = enum(u32) {
 const RUN_OPCODE_FN_OFFSET = 0x5BAE0;
 const RUN_FRAME_FN_OFFSET = 0xBC90;
 const GAME_TICK_FN_OFFSET = 0x4700;
+const WRITE_INPUT_FN_OFFSET = 0x06B9A0;
 const CPU_REGS_OFFSET = 0xEE6820;
 const DYN_BANK_MAP_OFFSET = 0xEE6994;
 const STT_BANK_MAP_OFFSET = 0x139D38;
@@ -44,6 +47,8 @@ const FRAME_COUNTER_OFFSET = 0x1E4770;
 const USER_RAM_OFFSET = 0x2B6000;
 const PAL_OFFSET = 0x241000;
 const VRAM_OFFSET = 0x286000;
+const P1_COMMAND_OFFSET = 0x285FD8;
+const P2_COMMAND_OFFSET = 0x285FDC;
 
 // Probably I'm missing something.
 // @TODO: replace it by the emulator save state when I find the address.
@@ -86,6 +91,10 @@ pub fn getRunFramePtr() RunFrameT {
 
 pub fn getGameTickPtr() RunFrameT {
     return @ptrCast(base_ptr + GAME_TICK_FN_OFFSET);
+}
+
+pub fn getWriteInputPtr() WriteInputT {
+    return @ptrCast(base_ptr + WRITE_INPUT_FN_OFFSET);
 }
 
 /// Returns true if the emulation is running (the game is not paused or in main menu).
@@ -156,6 +165,22 @@ pub fn readBank(comptime T: type, bank: u32, addr: u32) T {
     return readM64KInt(T, @ptrCast(getStaticBankPtr(bank) + (addr & 0xFFFFF)));
 }
 
+pub fn getCommand(side: util.Side) Command {
+    const command = switch (side) {
+        .P1 => base_ptr[P1_COMMAND_OFFSET],
+        .P2 => base_ptr[P2_COMMAND_OFFSET],
+    };
+    return Command.fromRaw(command);
+}
+
+pub fn setCommand(side: util.Side, command: Command) void {
+    const raw_command = command.toRaw();
+    switch (side) {
+        .P1 => base_ptr[P1_COMMAND_OFFSET] = raw_command,
+        .P2 => base_ptr[P2_COMMAND_OFFSET] = raw_command,
+    }
+}
+
 fn getRomPtr() [*]u8 {
     const mem_ptr_var: *[*]u8 = @alignCast(@ptrCast(base_ptr + DYN_BANK_MAP_OFFSET));
     return mem_ptr_var.*;
@@ -181,6 +206,43 @@ fn getRegPtr(reg: CpuRegister) *u32 {
     const offset = @intFromEnum(reg);
     return @ptrCast(cpu_regs_ptr + offset);
 }
+
+pub const Command = packed struct {
+    pub const Direction = enum(u4) {
+        Neutral = 0,
+        Up = 1,
+        Down = 2,
+        Left = 4,
+        UpLeft = 5,
+        DownLeft = 6,
+        Right = 8,
+        UpRight = 9,
+        DownRight = 10,
+    };
+
+    direction: Direction = .Neutral,
+    a: bool = false,
+    b: bool = false,
+    c: bool = false,
+    d: bool = false,
+
+    fn fromRaw(raw_command: u8) Command {
+        return @bitCast(~raw_command);
+    }
+
+    fn toRaw(self: Command) u8 {
+        return ~@as(u8, @bitCast(self));
+    }
+
+    test "Command fromRaw" {
+        const t = @import("std").testing;
+        try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .Neutral }, Command.fromRaw(0xFF));
+        try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .Up }, Command.fromRaw(0xFE));
+        try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .UpRight }, Command.fromRaw(0xF6));
+        try t.expectEqual(Command{ .a = true, .b = false, .c = false, .d = false, .direction = .DownLeft }, Command.fromRaw(0xE5));
+        try t.expectEqual(Command{ .a = false, .b = false, .c = true, .d = true, .direction = .Right }, Command.fromRaw(0x37));
+    }
+};
 
 inline fn readM64KInt(comptime T: type, buffer: *const [@divExact(@typeInfo(T).Int.bits, 8)]u8) T {
     const ptr: [*]const u8 = @ptrCast(buffer);

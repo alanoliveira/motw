@@ -5,11 +5,13 @@ const emu = @import("emulator.zig");
 const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
+const command_recorder = @import("command_recorder.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 var originalRunOpcode: emu.RunOpcodeT = undefined;
 var originalRunFrame: emu.RunFrameT = undefined;
 var originalGameTick: emu.GameTickT = undefined;
+var originalWriteInput: emu.WriteInputT = undefined;
 
 pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
     switch (reason) {
@@ -60,6 +62,11 @@ fn initialize() !void {
     mh.createHook(emu.getGameTickPtr(), &hookedGameTick, @ptrCast(&originalGameTick)) catch |err| {
         std.debug.print("Error on hooking GameTick\n", .{});
         return err;
+    };
+
+    mh.createHook(emu.getWriteInputPtr(), &hookedWriteInput, @ptrCast(&originalWriteInput)) catch {
+        std.debug.print("Error on hooking WriteInput\n", .{});
+        return;
     };
 
     std.debug.print("Enabling hooks\n", .{});
@@ -117,6 +124,13 @@ fn checkInputs() void {
     if (input.isPressed(.{ .Keyboard = .F4 })) {
         save_state.load(settings.save_state_slot);
     }
+
+    if (input.isPressed(.{ .Keyboard = .F9 })) {
+        command_recorder.record();
+    }
+    if (input.isPressed(.{ .Keyboard = .F10 })) {
+        command_recorder.playback();
+    }
 }
 
 fn hookedRunOpcode() callconv(.C) void {
@@ -132,4 +146,9 @@ fn hookedGameTick() callconv(.C) void {
     const frame = emu.getFrameCount();
     if (frame % settings.slowdown_divider == 0)
         originalGameTick();
+}
+
+fn hookedWriteInput(ipt: u32) callconv(.C) void {
+    originalWriteInput(ipt);
+    command_recorder.process();
 }
