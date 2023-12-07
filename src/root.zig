@@ -2,16 +2,9 @@ const std = @import("std");
 const win = @import("win32.zig");
 const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
-const input = @import("input.zig");
-const settings = @import("settings.zig");
-const save_state = @import("save_state.zig");
-const command_recorder = @import("command_recorder.zig");
+const hooks = @import("hooks.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
-var originalRunOpcode: emu.RunOpcodeT = undefined;
-var originalRunFrame: emu.RunFrameT = undefined;
-var originalGameTick: emu.GameTickT = undefined;
-var originalWriteInput: emu.WriteInputT = undefined;
 
 pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
     switch (reason) {
@@ -49,24 +42,24 @@ fn initialize() !void {
     };
     errdefer _ = mh.uninitialize() catch {};
 
-    mh.createHook(emu.getRunOpcodePtr(), &hookedRunOpcode, @ptrCast(&originalRunOpcode)) catch |err| {
+    mh.createHook(emu.getRunOpcodePtr(), &hooks.runOpcode, @ptrCast(&hooks.originalRunOpcode)) catch |err| {
         std.debug.print("Error on hooking RunOpcode {}\n", .{err});
         return err;
     };
 
-    mh.createHook(emu.getRunFramePtr(), &hookedRunFrame, @ptrCast(&originalRunFrame)) catch |err| {
+    mh.createHook(emu.getRunFramePtr(), &hooks.runFrame, @ptrCast(&hooks.originalRunFrame)) catch |err| {
         std.debug.print("Error on hooking RunFrame\n", .{});
         return err;
     };
 
-    mh.createHook(emu.getGameTickPtr(), &hookedGameTick, @ptrCast(&originalGameTick)) catch |err| {
+    mh.createHook(emu.getGameTickPtr(), &hooks.gameTick, @ptrCast(&hooks.originalGameTick)) catch |err| {
         std.debug.print("Error on hooking GameTick\n", .{});
         return err;
     };
 
-    mh.createHook(emu.getWriteInputPtr(), &hookedWriteInput, @ptrCast(&originalWriteInput)) catch {
+    mh.createHook(emu.getWriteInputPtr(), &hooks.writeInput, @ptrCast(&hooks.originalWriteInput)) catch |err| {
         std.debug.print("Error on hooking WriteInput\n", .{});
-        return;
+        return err;
     };
 
     std.debug.print("Enabling hooks\n", .{});
@@ -80,6 +73,11 @@ fn initialize() !void {
 }
 
 fn deinitialize() !void {
+    std.debug.print("Disabling hooks\n", .{});
+    mh.disableHook(mh.ALL_HOOKS) catch {
+        std.debug.print("Error on disabling hooks\n", .{});
+    };
+
     std.time.sleep(100 * std.time.ns_per_ms); // wait to make sure no hook is running anymore
 
     std.debug.print("Uninitializing minhook\n", .{});
@@ -91,64 +89,18 @@ fn deinitialize() !void {
     _ = win.FreeConsole();
 }
 
-fn shutdown() void {
+pub fn shutdown() void {
     std.debug.print("Shutting down\n", .{});
-
-    std.debug.print("Disabling hooks\n", .{});
-    mh.disableHook(mh.ALL_HOOKS) catch {
-        std.debug.print("Error on disabling hooks\n", .{});
-    };
 
     // run in a separated thread to not uninitialize minhook inside a hook.
     _ = win.CreateThread(
         null,
         0,
         @ptrCast(&win.FreeLibrary),
-        SELF_HANDLE,
+        @import("root").SELF_HANDLE,
         .THREAD_CREATE_RUN_IMMEDIATELY,
         null,
     ) orelse {
         std.debug.print("Error on creating FreeLibrary thread\n", .{});
     };
-}
-
-fn checkInputs() void {
-    input.poll();
-
-    if (input.isPressed(.{ .Keyboard = .F7 })) {
-        defer shutdown();
-    }
-    if (input.isPressed(.{ .Keyboard = .F3 })) {
-        save_state.save(settings.save_state_slot);
-    }
-    if (input.isPressed(.{ .Keyboard = .F4 })) {
-        save_state.load(settings.save_state_slot);
-    }
-
-    if (input.isPressed(.{ .Keyboard = .F9 })) {
-        command_recorder.record();
-    }
-    if (input.isPressed(.{ .Keyboard = .F10 })) {
-        command_recorder.playback();
-    }
-}
-
-fn hookedRunOpcode() callconv(.C) void {
-    return originalRunOpcode();
-}
-
-fn hookedRunFrame() callconv(.C) u32 {
-    checkInputs();
-    return originalRunFrame();
-}
-
-fn hookedGameTick() callconv(.C) void {
-    const frame = emu.getFrameCount();
-    if (frame % settings.slowdown_divider == 0)
-        originalGameTick();
-}
-
-fn hookedWriteInput(ipt: u32) callconv(.C) void {
-    originalWriteInput(ipt);
-    command_recorder.process();
 }
