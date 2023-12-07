@@ -18,6 +18,8 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    const zigwin32 = b.dependency("zigwin32", .{});
+
     const lib = b.addSharedLibrary(.{
         .name = "motw",
         // In this case the main source file is merely a path, however, in more
@@ -39,6 +41,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    injector.addModule("zigwin32", zigwin32.module("zigwin32"));
     injector.linkLibC();
 
     // This declares intent for the executable to be installed into the
