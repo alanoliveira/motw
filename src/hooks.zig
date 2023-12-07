@@ -5,12 +5,14 @@ const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
 const command_recorder = @import("command_recorder.zig");
+const Renderer = @import("renderer.zig");
 
 pub var originalRunOpcode: emu.RunOpcodeT = undefined;
 pub var originalRunFrame: emu.RunFrameT = undefined;
 pub var originalGameTick: emu.GameTickT = undefined;
 pub var originalWriteInput: emu.WriteInputT = undefined;
 pub var originalEndScene: std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndScene) = undefined;
+var renderer: Renderer = undefined;
 
 pub fn runOpcode() callconv(.C) void {
     return originalRunOpcode();
@@ -33,6 +35,9 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
 }
 
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
+    renderer.initialize(device) catch return originalEndScene(device);
+
+    renderer.deinitialize() catch {};
     return originalEndScene(device);
 }
 
