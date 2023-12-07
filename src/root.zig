@@ -2,6 +2,7 @@ const std = @import("std");
 const win = @import("win32.zig");
 const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
+const input = @import("input.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 var originalRunOpcode: emu.RunOpcodeT = undefined;
@@ -32,6 +33,9 @@ fn initialize() !void {
         return error.EmulatorError;
     };
     emu.initialize(@ptrCast(base_addr));
+
+    std.debug.print("Initializing win32 api\n", .{});
+    win.initialize();
 
     std.debug.print("Initializing minhook\n", .{});
     mh.initialize() catch |err| {
@@ -98,7 +102,9 @@ fn hookedRunOpcode() callconv(.C) void {
 }
 
 fn hookedRunFrame() callconv(.C) u32 {
-    if (!emu.isEmulationRunning()) {
+    input.poll();
+
+    if (input.isPressed(.{ .Keyboard = .F7 })) {
         defer shutdown();
     }
 
