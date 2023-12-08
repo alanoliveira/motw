@@ -3,6 +3,7 @@ const win = @import("win32.zig");
 const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
 const hooks = @import("hooks.zig");
+const view = @import("view.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 
@@ -28,6 +29,8 @@ pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) call
 fn initialize() !void {
     _ = win.AllocConsole();
     errdefer _ = win.FreeConsole();
+
+    view.clean();
 
     std.debug.print("Getting game process address\n", .{});
     const base_addr = win.GetModuleHandleA(null) orelse {

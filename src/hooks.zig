@@ -1,6 +1,7 @@
 const std = @import("std");
 const win = @import("win32.zig");
 const emu = @import("emulator.zig");
+const view = @import("view.zig");
 const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
@@ -37,7 +38,9 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
     renderer.initialize(device) catch return originalEndScene(device);
 
-    @import("hud_enhancement.zig").render(&renderer);
+    @import("hud_enhancement.zig").render();
+    view.render(&renderer);
+    view.clean();
 
     renderer.deinitialize() catch {};
     return originalEndScene(device);
