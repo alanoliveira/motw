@@ -1,5 +1,6 @@
 const std = @import("std");
 const emu = @import("emulator.zig");
+const view = @import("view.zig");
 const Command = emu.Command;
 
 const Status = enum {
@@ -44,12 +45,15 @@ pub fn process() void {
     switch (status) {
         .Prepare => {
             swapCommands();
+            view.drawText(view.Text.new("PREPARE", 0, 50, 0xFFFF0000), .{});
         },
         .Recording => {
             swapCommands();
             if (!buffer.push(emu.getCommand(.P2))) {
                 stopRecording();
+                return;
             }
+            view.drawText(view.Text.newFmt("REC {d}", .{buffer.size}, 0, 50, 0xFFFF0000), .{});
         },
         .Playback => {
             const recorded = buffer.pop() orelse {
@@ -57,6 +61,7 @@ pub fn process() void {
                 return;
             };
             emu.setCommand(.P2, recorded);
+            view.drawText(view.Text.newFmt("PLAY {d}", .{buffer.size}, 0, 50, 0xFF00FF00), .{});
         },
         else => {},
     }

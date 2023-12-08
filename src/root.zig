@@ -30,8 +30,6 @@ fn initialize() !void {
     _ = win.AllocConsole();
     errdefer _ = win.FreeConsole();
 
-    view.clean();
-
     std.debug.print("Getting game process address\n", .{});
     const base_addr = win.GetModuleHandleA(null) orelse {
         std.debug.print("Error on getting game base address.\n", .{});

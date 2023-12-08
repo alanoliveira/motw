@@ -6,6 +6,7 @@ const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
 const command_recorder = @import("command_recorder.zig");
+const hud_info = @import("hud_info.zig");
 const Renderer = @import("renderer.zig");
 
 pub var originalRunOpcode: emu.RunOpcodeT = undefined;
@@ -21,6 +22,7 @@ pub fn runOpcode() callconv(.C) void {
 
 pub fn runFrame() callconv(.C) u32 {
     checkInputs();
+    hud_info.run();
     return originalRunFrame();
 }
 
@@ -38,9 +40,7 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
     renderer.initialize(device) catch return originalEndScene(device);
 
-    @import("hud_enhancement.zig").render();
     view.render(&renderer);
-    view.clean();
 
     renderer.deinitialize() catch {};
     return originalEndScene(device);
