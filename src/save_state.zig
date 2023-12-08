@@ -18,7 +18,7 @@ pub fn save(slot: usize) void {
         .emulator_state = emu.State.save(),
         .command_recorder_state = command_recorder.State.save(),
     };
-    view.drawText(view.Text.newFmt("STATE {d} SAVED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
+    view.drawText(view.Text.new("STATE {d} SAVED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
 }
 
 pub fn load(slot: usize) void {
@@ -27,6 +27,6 @@ pub fn load(slot: usize) void {
     if (states[slot]) |state| {
         state.emulator_state.load();
         state.command_recorder_state.load();
-        view.drawText(view.Text.newFmt("STATE {d} LOADED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
+        view.drawText(view.Text.new("STATE {d} LOADED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
     }
 }

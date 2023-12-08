@@ -5,15 +5,41 @@ pub const SCREEN_WIDTH = 398;
 pub const SCREEN_HEIGHT = 224;
 const GLYPH_WIDTH = 4;
 
-var string_buffer: [4096]u8 = undefined;
-var strings_fba = std.heap.FixedBufferAllocator.init(&string_buffer);
-var strings = strings_fba.allocator();
+const allocator = std.heap.c_allocator;
+var drawables = DrawableBuffer{};
 
-var drawable_buffer: [4096]u8 = undefined;
-var fba = std.heap.FixedBufferAllocator.init(&drawable_buffer);
-var allocator = fba.allocator();
-const DrawableList = std.SinglyLinkedList(Drawable);
-var drawables = DrawableList{};
+const DrawableBuffer = struct {
+    const DrawableList = std.DoublyLinkedList(Drawable);
+
+    buffer: [50]?DrawableList.Node = .{null} ** 50,
+    list: DrawableList = .{},
+
+    fn insert(self: *DrawableBuffer, drawable: Drawable) bool {
+        for (0..self.buffer.len) |i| {
+            if (self.buffer[i] != null) continue;
+            self.buffer[i] = DrawableList.Node{ .data = drawable };
+            self.list.append(&self.buffer[i].?);
+            return true;
+        }
+        return false;
+    }
+
+    fn update(self: *DrawableBuffer) void {
+        for (0..self.buffer.len) |i| {
+            var node = &(self.buffer[i] orelse continue);
+            if (node.data.ttl > 0) {
+                node.data.ttl -= 1;
+            } else {
+                self.list.remove(node);
+                switch (node.data.component) {
+                    .Text => |t| allocator.free(t.text),
+                    else => {},
+                }
+                self.buffer[i] = null;
+            }
+        }
+    }
+};
 
 const Drawable = struct {
     const Component = union(enum) {
@@ -22,7 +48,7 @@ const Drawable = struct {
         Rect: Rect,
     };
     component: Component,
-    ttl: usize,
+    ttl: usize = 0,
 };
 
 pub const Text = struct {
@@ -31,22 +57,17 @@ pub const Text = struct {
     y: i32,
     color: u32,
 
-    pub fn new(text: []const u8, x: i32, y: i32, color: u32) Text {
+    pub fn new(comptime fmt: []const u8, args: anytype, x: i32, y: i32, color: u32) Text {
+        const fmt_text = std.fmt.allocPrint(allocator, fmt, args) catch fmt_err: {
+            std.debug.print("Failed to format string\n", .{});
+            break :fmt_err "";
+        };
         return Text{
-            .text = text,
+            .text = fmt_text,
             .x = x,
             .y = y,
             .color = color,
         };
-    }
-
-    pub fn newFmt(comptime fmt: []const u8, args: anytype, x: i32, y: i32, color: u32) Text {
-        var txt_buffer: [1024]u8 = .{0} ** 1024;
-        const text = std.fmt.bufPrint(@ptrCast(&txt_buffer), fmt, args) catch fmt_err: {
-            std.debug.print("Failed to format string\n", .{});
-            break :fmt_err "";
-        };
-        return Text.new(text, x, y, color);
     }
 };
 
@@ -89,7 +110,7 @@ pub const Rect = struct {
 };
 
 pub fn render(renderer: *Renderer) void {
-    var node = drawables.first;
+    var node = drawables.list.first;
     while (node) |drawable| : (node = drawable.next) {
         switch (drawable.data.component) {
             .Text => |d| renderer.drawText(d.text, d.x, d.y, d.color),
@@ -104,19 +125,7 @@ pub fn render(renderer: *Renderer) void {
 }
 
 pub fn update() void {
-    var node = drawables.first;
-    while (node) |drawable| : (node = drawable.next) {
-        if (drawable.data.ttl > 0) {
-            drawable.data.ttl -= 1;
-        } else {
-            drawables.remove(drawable);
-            switch (drawable.data.component) {
-                .Text => |d| strings.free(d.text),
-                else => {},
-            }
-            allocator.destroy(drawable);
-        }
-    }
+    drawables.update();
 }
 
 pub const DrawOptions = struct {
@@ -139,18 +148,14 @@ pub const DrawOptions = struct {
 };
 
 pub fn drawText(text: Text, opts: DrawOptions) void {
-    var node = allocator.create(DrawableList.Node) catch return;
     var adj_text: Text = text;
-
-    adj_text.text = strings.dupe(u8, text.text) catch return;
     const text_width = @as(i32, @intCast(adj_text.text.len)) * GLYPH_WIDTH;
     adj_text.x = opts.anchor.calcX(adj_text.x, text_width);
 
-    node.data = .{
+    _ = drawables.insert(.{
         .component = .{ .Text = adj_text },
         .ttl = opts.ttl,
-    };
-    drawables.prepend(node);
+    });
 }
 
 pub fn drawLine(line: Line, opts: DrawOptions) void {
@@ -158,22 +163,18 @@ pub fn drawLine(line: Line, opts: DrawOptions) void {
     adj_line.x1 = opts.anchor.calcX(adj_line.x1, 0);
     adj_line.x2 = opts.anchor.calcX(adj_line.x2, 0);
 
-    var node = allocator.create(DrawableList.Node) catch return;
-    node.data = .{
+    _ = drawables.insert(.{
         .component = .{ .Line = adj_line },
         .ttl = opts.ttl,
-    };
-    drawables.prepend(node);
+    });
 }
 
 pub fn drawRect(rect: Rect, opts: DrawOptions) void {
     var adj_rect: Rect = rect;
     adj_rect.x = opts.anchor.calcX(adj_rect.x, adj_rect.w);
 
-    var node = allocator.create(DrawableList.Node) catch return;
-    node.data = .{
+    _ = drawables.insert(.{
         .component = .{ .Rect = adj_rect },
         .ttl = opts.ttl,
-    };
-    drawables.prepend(node);
+    });
 }

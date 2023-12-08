@@ -27,14 +27,14 @@ fn draw(self: *const Self) void {
 
 fn drawHealth(self: *const Self) void {
     view.drawText(
-        view.Text.newFmt("{d:0>3}", .{self.player.getHealth()}, 160, 18, 0xFF0000AA),
+        view.Text.new("{d:0>3}", .{self.player.getHealth()}, 160, 18, 0xFF0000AA),
         .{ .anchor = self.getAnchor() },
     );
 }
 
 fn drawPower(self: *const Self) void {
     view.drawText(
-        view.Text.newFmt("{d:0>3}", .{self.player.getPower()}, 88, 210, 0xFF0000AA),
+        view.Text.new("{d:0>3}", .{self.player.getPower()}, 88, 210, 0xFF0000AA),
         .{ .anchor = self.getAnchor() },
     );
 }
@@ -52,7 +52,7 @@ fn drawGuardGauge(self: *const Self) void {
     const options = .{ .anchor = self.getAnchor() };
     view.drawRect(view.Rect.new(62, 216, GUARD_GAUGE_WIDTH, 5, false, 0xFFFFFFFF), options);
     view.drawRect(view.Rect.new(62, 216, cur_gauge_width, 5, true, 0xFFBBBBFF), options);
-    view.drawText(view.Text.newFmt("{d:0>2}", .{guard}, 88, 217, 0xFF0000AA), options);
+    view.drawText(view.Text.new("{d:0>2}", .{guard}, 88, 217, 0xFF0000AA), options);
 }
 
 fn getAnchor(self: *const Self) view.DrawOptions.Anchor {

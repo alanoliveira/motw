@@ -45,7 +45,7 @@ pub fn process() void {
     switch (status) {
         .Prepare => {
             swapCommands();
-            view.drawText(view.Text.new("PREPARE", 0, 50, 0xFFFF0000), .{});
+            view.drawText(view.Text.new("PREPARE", .{}, 0, 50, 0xFFFF0000), .{});
         },
         .Recording => {
             swapCommands();
@@ -53,7 +53,7 @@ pub fn process() void {
                 stopRecording();
                 return;
             }
-            view.drawText(view.Text.newFmt("REC {d}", .{buffer.size}, 0, 50, 0xFFFF0000), .{});
+            view.drawText(view.Text.new("REC {d}", .{buffer.size}, 0, 50, 0xFFFF0000), .{});
         },
         .Playback => {
             const recorded = buffer.pop() orelse {
@@ -61,7 +61,7 @@ pub fn process() void {
                 return;
             };
             emu.setCommand(.P2, recorded);
-            view.drawText(view.Text.newFmt("PLAY {d}", .{buffer.size}, 0, 50, 0xFF00FF00), .{});
+            view.drawText(view.Text.new("PLAY {d}", .{buffer.size}, 0, 50, 0xFF00FF00), .{});
         },
         else => {},
     }
