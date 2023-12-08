@@ -21,6 +21,7 @@ pub fn runOpcode() callconv(.C) void {
 }
 
 pub fn runFrame() callconv(.C) u32 {
+    view.update();
     checkInputs();
     hud_info.run();
     return originalRunFrame();
@@ -37,6 +38,7 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
     command_recorder.process();
 }
 
+// remind: directx EndScene is called a few times per frame
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
     renderer.initialize(device) catch return originalEndScene(device);
 

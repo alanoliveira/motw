@@ -100,7 +100,12 @@ pub fn render(renderer: *Renderer) void {
                 renderer.drawRectOutline(d.x, d.y, d.x + d.w, d.y + d.h, d.color);
             },
         }
+    }
+}
 
+pub fn update() void {
+    var node = drawables.first;
+    while (node) |drawable| : (node = drawable.next) {
         if (drawable.data.ttl > 0) {
             drawable.data.ttl -= 1;
         } else {
