@@ -13,10 +13,12 @@ const BUTTON_DISPLAY = std.ComptimeStringMap(struct { color: u32, label: []const
 var p1_history: PlayerHistory = .{};
 var p2_history: PlayerHistory = .{};
 
-pub fn run() void {
+pub fn update() void {
     p1_history.insert(emu.getCommand(.P1));
     p2_history.insert(emu.getCommand(.P2));
+}
 
+pub fn draw() void {
     if (settings.display_p1_inputs) {
         drawPlayerHistory(p1_history, .Left);
     }

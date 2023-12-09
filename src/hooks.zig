@@ -40,7 +40,7 @@ pub fn runFrame() callconv(.C) u32 {
         checkInputs();
         match_cheats.run();
         hud_info.run();
-        command_history.run();
+        command_history.draw();
         hitbox_viewer.run();
     }
     return originalRunFrame();
@@ -60,6 +60,7 @@ pub fn writeInput(ipt: u32) callconv(.C) void {
 
     originalWriteInput(ipt);
     command_recorder.process();
+    command_history.update();
 }
 
 // remind: directx EndScene is called a few times per frame
