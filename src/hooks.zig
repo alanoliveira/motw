@@ -9,6 +9,7 @@ const save_state = @import("save_state.zig");
 const match_cheats = @import("match_cheats.zig");
 const command_recorder = @import("command_recorder.zig");
 const command_history = @import("command_history.zig");
+const hitbox_viewer = @import("hitbox_viewer.zig");
 const menu = @import("menu.zig");
 const hud_info = @import("hud_info.zig");
 const Renderer = @import("renderer.zig");
@@ -40,6 +41,7 @@ pub fn runFrame() callconv(.C) u32 {
         match_cheats.run();
         hud_info.run();
         command_history.run();
+        hitbox_viewer.run();
     }
     return originalRunFrame();
 }

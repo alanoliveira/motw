@@ -167,7 +167,7 @@ pub const DrawOptions = struct {
         fn calcX(self: Anchor, x: i32, width: i32) i32 {
             return switch (self) {
                 .Right => (SCREEN_WIDTH) - x - width,
-                .Center => (SCREEN_WIDTH / 2) - @divTrunc(width, 2),
+                .Center => x + (SCREEN_WIDTH / 2) - @divTrunc(width, 2),
                 else => x,
             };
         }

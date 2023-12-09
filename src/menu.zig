@@ -20,6 +20,7 @@ const OPTIONS = [_]Option{
     .{ .name = DisplayHudInfo.LABEL, .change = DisplayHudInfo.change, .getValueLabel = DisplayHudInfo.getValueLabel },
     .{ .name = DisplayP1Inputs.LABEL, .change = DisplayP1Inputs.change, .getValueLabel = DisplayP1Inputs.getValueLabel },
     .{ .name = DisplayP2Inputs.LABEL, .change = DisplayP2Inputs.change, .getValueLabel = DisplayP2Inputs.getValueLabel },
+    .{ .name = DisplayHitboxes.LABEL, .change = DisplayHitboxes.change, .getValueLabel = DisplayHitboxes.getValueLabel },
     .{ .name = SaveStateButton.LABEL, .change = SaveStateButton.change, .getValueLabel = SaveStateButton.getValueLabel },
     .{ .name = LoadStateButton.LABEL, .change = LoadStateButton.change, .getValueLabel = LoadStateButton.getValueLabel },
     .{ .name = CommandRecordButton.LABEL, .change = CommandRecordButton.change, .getValueLabel = CommandRecordButton.getValueLabel },
@@ -181,6 +182,20 @@ const DisplayP2Inputs = struct {
 
     fn getValueLabel() []const u8 {
         return if (settings.display_p2_inputs) "On" else "Off";
+    }
+};
+
+const DisplayHitboxes = struct {
+    const LABEL = "Display Hitboxes";
+
+    fn change(command: emu.Command) void {
+        if (command.direction == .Left or command.direction == .Right) {
+            settings.display_hitboxes = !settings.display_hitboxes;
+        }
+    }
+
+    fn getValueLabel() []const u8 {
+        return if (settings.display_hitboxes) "On" else "Off";
     }
 };
 
