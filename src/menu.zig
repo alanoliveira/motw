@@ -18,6 +18,8 @@ const OPTIONS = [_]Option{
     .{ .name = SaveStateSlot.LABEL, .change = SaveStateSlot.change, .getValueLabel = SaveStateSlot.getValueLabel },
     .{ .name = CommandRecordSlot.LABEL, .change = CommandRecordSlot.change, .getValueLabel = CommandRecordSlot.getValueLabel },
     .{ .name = DisplayHudInfo.LABEL, .change = DisplayHudInfo.change, .getValueLabel = DisplayHudInfo.getValueLabel },
+    .{ .name = DisplayP1Inputs.LABEL, .change = DisplayP1Inputs.change, .getValueLabel = DisplayP1Inputs.getValueLabel },
+    .{ .name = DisplayP2Inputs.LABEL, .change = DisplayP2Inputs.change, .getValueLabel = DisplayP2Inputs.getValueLabel },
     .{ .name = SaveStateButton.LABEL, .change = SaveStateButton.change, .getValueLabel = SaveStateButton.getValueLabel },
     .{ .name = LoadStateButton.LABEL, .change = LoadStateButton.change, .getValueLabel = LoadStateButton.getValueLabel },
     .{ .name = CommandRecordButton.LABEL, .change = CommandRecordButton.change, .getValueLabel = CommandRecordButton.getValueLabel },
@@ -151,6 +153,34 @@ const DisplayHudInfo = struct {
 
     fn getValueLabel() []const u8 {
         return if (settings.display_hud_info) "On" else "Off";
+    }
+};
+
+const DisplayP1Inputs = struct {
+    const LABEL = "Display P1 Inputs";
+
+    fn change(command: emu.Command) void {
+        if (command.direction == .Left or command.direction == .Right) {
+            settings.display_p1_inputs = !settings.display_p1_inputs;
+        }
+    }
+
+    fn getValueLabel() []const u8 {
+        return if (settings.display_p1_inputs) "On" else "Off";
+    }
+};
+
+const DisplayP2Inputs = struct {
+    const LABEL = "Display P2 Inputs";
+
+    fn change(command: emu.Command) void {
+        if (command.direction == .Left or command.direction == .Right) {
+            settings.display_p2_inputs = !settings.display_p2_inputs;
+        }
+    }
+
+    fn getValueLabel() []const u8 {
+        return if (settings.display_p2_inputs) "On" else "Off";
     }
 };
 

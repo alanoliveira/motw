@@ -13,7 +13,7 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
     var texture: ?*win.IDirect3DTexture9 = null;
     if (device.IDirect3DDevice9_CreateTexture(
         8,
-        8 * 128,
+        8 * (128 + SYMBOLS_BMP.len),
         1,
         win.D3DUSAGE_DYNAMIC,
         win.D3DFORMAT.A8R8G8B8,
@@ -34,7 +34,11 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
     }
 
     const bmp_data: [*]u32 = @alignCast(@ptrCast(lock_rect.pBits));
-    for (font8x8.font8x8_basic, 0..) |glyph, i| {
+    for (0..(font8x8.font8x8_basic.len + SYMBOLS_BMP.len)) |i| {
+        const glyph = if (i < font8x8.font8x8_basic.len)
+            font8x8.font8x8_basic[i]
+        else
+            SYMBOLS_BMP[i - font8x8.font8x8_basic.len];
         for (glyph, 0..) |glyph_row, y| {
             for (0..8) |x| {
                 const bit = std.math.shr(u8, glyph_row, x) & 1;
@@ -121,3 +125,96 @@ pub fn deinitialize(self: *Self) void {
     if (self.sprite) |s| _ = s.lpVtbl.*.Release.?(s);
     if (self.texture) |t| _ = t.IUnknown_Release();
 }
+
+const SYMBOLS_BMP = [_][8]u8{
+    .{ // Neutral
+        0b00000000,
+        0b00100000,
+        0b00100000,
+        0b11111000,
+        0b00100000,
+        0b00100000,
+        0b00000000,
+        0b00000000,
+    },
+    .{ // Up
+        0b00010000,
+        0b00111000,
+        0b01010100,
+        0b10010010,
+        0b00010000,
+        0b00010000,
+        0b00010000,
+        0b00000000,
+    },
+    .{ // Down
+        0b00010000,
+        0b00010000,
+        0b00010000,
+        0b10010010,
+        0b01010100,
+        0b00111000,
+        0b00010000,
+        0b00000000,
+    },
+    .{ // Right
+        0b00010000,
+        0b00001000,
+        0b00000100,
+        0b11111110,
+        0b00000100,
+        0b00001000,
+        0b00010000,
+        0b00000000,
+    },
+    .{ // Left
+        0b00010000,
+        0b00100000,
+        0b01000000,
+        0b11111110,
+        0b01000000,
+        0b00100000,
+        0b00010000,
+        0b00000000,
+    },
+    .{ // Up-Right
+        0b01111100,
+        0b00001100,
+        0b00010100,
+        0b00100100,
+        0b01000100,
+        0b10000000,
+        0b00000000,
+        0b00000000,
+    },
+    .{ // Up-Left
+        0b11111000,
+        0b11000000,
+        0b10100000,
+        0b10010000,
+        0b10001000,
+        0b00000100,
+        0b00000000,
+        0b00000000,
+    },
+    .{ // Down-Right
+        0b10000000,
+        0b01000100,
+        0b00100100,
+        0b00010100,
+        0b00001100,
+        0b01111100,
+        0b00000000,
+        0b00000000,
+    },
+    .{ // Down-Left
+        0b00000100,
+        0b10001000,
+        0b10010000,
+        0b10100000,
+        0b11000000,
+        0b11111000,
+        0b00000000,
+        0b00000000,
+    },
+};

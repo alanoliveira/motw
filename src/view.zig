@@ -3,7 +3,7 @@ const Renderer = @import("renderer.zig");
 
 pub const SCREEN_WIDTH = 398;
 pub const SCREEN_HEIGHT = 224;
-const GLYPH_WIDTH = 4;
+pub const GLYPH_WIDTH = 4;
 
 const allocator = std.heap.c_allocator;
 var drawables = DrawableBuffer{};
@@ -11,7 +11,7 @@ var drawables = DrawableBuffer{};
 const DrawableBuffer = struct {
     const DrawableList = std.DoublyLinkedList(Drawable);
 
-    buffer: [50]?DrawableList.Node = .{null} ** 50,
+    buffer: [512]?DrawableList.Node = .{null} ** 512,
     list: DrawableList = .{},
 
     fn insert(self: *DrawableBuffer, drawable: Drawable) bool {
@@ -44,6 +44,7 @@ const DrawableBuffer = struct {
 const Drawable = struct {
     const Component = union(enum) {
         Text: Text,
+        Symbol: Symbol,
         Line: Line,
         Rect: Rect,
     };
@@ -64,6 +65,34 @@ pub const Text = struct {
         };
         return Text{
             .text = fmt_text,
+            .x = x,
+            .y = y,
+            .color = color,
+        };
+    }
+};
+
+pub const Symbol = struct {
+    pub const Kind = enum(u8) {
+        Neutral = 128,
+        Up,
+        Down,
+        Left,
+        Right,
+        UpLeft,
+        UpRight,
+        DownLeft,
+        DownRight,
+    };
+
+    kind: Kind,
+    x: i32,
+    y: i32,
+    color: u32,
+
+    pub fn new(kind: Kind, x: i32, y: i32, color: u32) Symbol {
+        return Symbol{
+            .kind = kind,
             .x = x,
             .y = y,
             .color = color,
@@ -114,6 +143,7 @@ pub fn render(renderer: *Renderer) void {
     while (node) |drawable| : (node = drawable.next) {
         switch (drawable.data.component) {
             .Text => |d| renderer.drawText(d.text, d.x, d.y, d.color),
+            .Symbol => |d| renderer.drawText(&.{@intFromEnum(d.kind)}, d.x, d.y, d.color),
             .Line => |d| renderer.drawLine(d.x1, d.y1, d.x2, d.y2, d.color),
             .Rect => |d| if (d.fill) {
                 renderer.drawRectFill(d.x, d.y, d.x + d.w, d.y + d.h, d.color);
@@ -136,7 +166,7 @@ pub const DrawOptions = struct {
 
         fn calcX(self: Anchor, x: i32, width: i32) i32 {
             return switch (self) {
-                .Right => (SCREEN_WIDTH) - x - width - 1,
+                .Right => (SCREEN_WIDTH) - x - width,
                 .Center => (SCREEN_WIDTH / 2) - @divTrunc(width, 2),
                 else => x,
             };
@@ -175,6 +205,16 @@ pub fn drawRect(rect: Rect, opts: DrawOptions) void {
 
     _ = drawables.insert(.{
         .component = .{ .Rect = adj_rect },
+        .ttl = opts.ttl,
+    });
+}
+
+pub fn drawSymbol(symbol: Symbol, opts: DrawOptions) void {
+    var adj_symbol: Symbol = symbol;
+    adj_symbol.x = opts.anchor.calcX(adj_symbol.x, GLYPH_WIDTH);
+
+    _ = drawables.insert(.{
+        .component = .{ .Symbol = adj_symbol },
         .ttl = opts.ttl,
     });
 }

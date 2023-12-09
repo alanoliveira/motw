@@ -7,6 +7,7 @@ const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
 const command_recorder = @import("command_recorder.zig");
+const command_history = @import("command_history.zig");
 const menu = @import("menu.zig");
 const hud_info = @import("hud_info.zig");
 const Renderer = @import("renderer.zig");
@@ -30,6 +31,7 @@ pub fn runFrame() callconv(.C) u32 {
     } else {
         checkInputs();
         hud_info.run();
+        command_history.run();
     }
     return originalRunFrame();
 }
