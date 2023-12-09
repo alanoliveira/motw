@@ -24,6 +24,9 @@ pub fn runOpcode() callconv(.C) void {
 }
 
 pub fn runFrame() callconv(.C) u32 {
+    if (emu.isOnlineMode()) @import("root").shutdown();
+    if (!emu.isEmulationRunning()) return originalRunFrame();
+
     input.poll();
     view.update();
     if (game.isPaused()) {
@@ -37,6 +40,8 @@ pub fn runFrame() callconv(.C) u32 {
 }
 
 pub fn gameTick() callconv(.C) void {
+    if (!emu.isEmulationRunning()) return;
+
     const frame = emu.getFrameCount();
     if (game.isPaused() or
         (settings.slowdown_divider > 0 and frame % settings.slowdown_divider == 0))
@@ -44,12 +49,18 @@ pub fn gameTick() callconv(.C) void {
 }
 
 pub fn writeInput(ipt: u32) callconv(.C) void {
+    if (!emu.isEmulationRunning()) return;
+
     originalWriteInput(ipt);
     command_recorder.process();
 }
 
 // remind: directx EndScene is called a few times per frame
 pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT {
+    if (!emu.isEmulationRunning() or game.match.getStatus() != .Active) {
+        return originalEndScene(device);
+    }
+
     renderer.initialize(device) catch return originalEndScene(device);
 
     view.render(&renderer);

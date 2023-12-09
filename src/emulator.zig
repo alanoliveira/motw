@@ -49,6 +49,7 @@ const PAL_OFFSET = 0x241000;
 const VRAM_OFFSET = 0x286000;
 const P1_COMMAND_OFFSET = 0x285FD8;
 const P2_COMMAND_OFFSET = 0x285FDC;
+const IS_ONLINE_MODE_OFFSET = 0x1E8150;
 
 // Probably I'm missing something.
 // @TODO: replace it by the emulator save state when I find the address.
@@ -100,6 +101,10 @@ pub fn getWriteInputPtr() WriteInputT {
 /// Returns true if the emulation is running (the game is not paused or in main menu).
 pub fn isEmulationRunning() bool {
     return std.mem.readInt(u8, @ptrCast(base_ptr + IS_EMULATION_RUNNING_OFFSET), .little) != 1;
+}
+
+pub fn isOnlineMode() bool {
+    return std.mem.readInt(u32, @ptrCast(base_ptr + IS_ONLINE_MODE_OFFSET), .little) != 0;
 }
 
 pub fn getFrameCount() u32 {

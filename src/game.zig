@@ -2,14 +2,37 @@ const emu = @import("emulator.zig");
 
 const PLAYER1_OFFSET = 0x100400;
 const PLAYER2_OFFSET = 0x100500;
+const MATCH_OFFSET = 0x107400;
 const IS_PAUSED_OFFSET = 0x1041D2;
 
 pub const p1 = Player.new(PLAYER1_OFFSET);
 pub const p2 = Player.new(PLAYER2_OFFSET);
+pub const match = Match.new(MATCH_OFFSET);
 
 pub fn isPaused() bool {
     return emu.readMem(u8, IS_PAUSED_OFFSET) == 0xFF;
 }
+
+pub const Match = struct {
+    pub const MAX_TIME = 0x99;
+    const TIMER_OFFSET = 0x90;
+    const MATCH_STATUS_OFFSET = 0x8A;
+
+    const MatchStatus = enum(u8) {
+        Active = 0x44,
+        _,
+    };
+
+    base_addr: u32,
+
+    pub fn new(base_addr: u32) Match {
+        return Match{ .base_addr = base_addr };
+    }
+
+    pub fn getStatus(self: *const Match) MatchStatus {
+        return @enumFromInt(emu.readMem(u8, self.base_addr + MATCH_STATUS_OFFSET));
+    }
+};
 
 pub const Player = struct {
     pub const MAX_HEALTH = 120;

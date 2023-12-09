@@ -6,6 +6,7 @@ const hooks = @import("hooks.zig");
 const view = @import("view.zig");
 
 var SELF_HANDLE: win.HANDLE = undefined;
+var sutting_down = false;
 
 pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) callconv(win.WINAPI) win.BOOL {
     switch (reason) {
@@ -109,19 +110,24 @@ fn deinitialize() !void {
 }
 
 pub fn shutdown() void {
+    if (sutting_down) return;
     std.debug.print("Shutting down\n", .{});
 
     // run in a separated thread to not uninitialize minhook inside a hook.
-    _ = win.CreateThread(
+    const handle = win.CreateThread(
         null,
         0,
         @ptrCast(&win.FreeLibrary),
         @import("root").SELF_HANDLE,
         .THREAD_CREATE_RUN_IMMEDIATELY,
         null,
-    ) orelse {
+    );
+    if (handle == null) {
         std.debug.print("Error on creating FreeLibrary thread\n", .{});
-    };
+        return;
+    } else {
+        sutting_down = true;
+    }
 }
 
 fn getD3d9EndScenePtr() ?std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndScene) {
