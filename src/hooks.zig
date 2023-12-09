@@ -6,6 +6,7 @@ const view = @import("view.zig");
 const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
+const match_cheats = @import("match_cheats.zig");
 const command_recorder = @import("command_recorder.zig");
 const command_history = @import("command_history.zig");
 const menu = @import("menu.zig");
@@ -20,6 +21,9 @@ pub var originalEndScene: std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndSc
 var renderer: Renderer = undefined;
 
 pub fn runOpcode() callconv(.C) void {
+    if (!emu.isEmulationRunning()) return originalRunOpcode();
+
+    game.changeBehaviour(.{ .skip_round_count = true });
     return originalRunOpcode();
 }
 
@@ -33,6 +37,7 @@ pub fn runFrame() callconv(.C) u32 {
         menu.run();
     } else {
         checkInputs();
+        match_cheats.run();
         hud_info.run();
         command_history.run();
     }
