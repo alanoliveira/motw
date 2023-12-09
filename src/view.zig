@@ -1,9 +1,9 @@
 const std = @import("std");
 const Renderer = @import("renderer.zig");
 
-pub const SCREEN_WIDTH = 398;
-pub const SCREEN_HEIGHT = 224;
-pub const GLYPH_WIDTH = 4;
+pub const SCREEN_WIDTH = Renderer.SCREEN_WIDTH;
+pub const SCREEN_HEIGHT = Renderer.SCREEN_HEIGHT;
+pub const GLYPH_WIDTH: comptime_int = @intFromFloat(Renderer.GLYPH_WIDTH);
 
 const allocator = std.heap.c_allocator;
 var drawables = DrawableBuffer{};

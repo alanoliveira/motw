@@ -3,9 +3,9 @@ const std = @import("std");
 const win = @import("win32.zig");
 const Font8x8 = @import("font8x8.zig");
 
-pub const SCREEN_WIDTH = 398;
+pub const SCREEN_WIDTH = 396;
 pub const SCREEN_HEIGHT = 224;
-pub const GLYPH_SIZE = 8 / SCALE;
+pub const GLYPH_WIDTH = 8 / SCALE;
 const SCALE = 2.0;
 
 const D3D9Settings = struct {
