@@ -26,7 +26,6 @@ pub fn isPressed(virtual_key: VirtualKey) bool {
 }
 
 pub fn getPressed() ?VirtualKey {
-    poll();
     if (joystick_state.Flags & win.XINPUT_KEYSTROKE_KEYDOWN != 0 and @intFromEnum(joystick_state.VirtualKey) != 0) {
         return .{ .Controller = joystick_state.VirtualKey };
     }

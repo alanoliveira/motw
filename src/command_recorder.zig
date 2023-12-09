@@ -1,6 +1,7 @@
 const std = @import("std");
 const emu = @import("emulator.zig");
 const view = @import("view.zig");
+const settings = @import("settings.zig");
 const Command = emu.Command;
 
 const Status = enum {
@@ -39,7 +40,6 @@ const MAX_SLOTS = 10;
 var status: Status = .Stopped;
 var buffer: Slot = .{ .size = 0 };
 var slots: [MAX_SLOTS]Slot = undefined;
-var selected_slot: usize = 0;
 
 pub fn process() void {
     switch (status) {
@@ -67,12 +67,6 @@ pub fn process() void {
     }
 }
 
-pub fn selectSlot(slot: u32) void {
-    cancel();
-    if (slot >= MAX_SLOTS) return;
-    selected_slot = slot;
-}
-
 pub fn record() void {
     switch (status) {
         .Stopped => prepareRecording(),
@@ -95,17 +89,25 @@ fn prepareRecording() void {
 }
 
 fn startRecording() void {
+    buffer.size = 0;
     status = .Recording;
 }
 
 fn stopRecording() void {
+    const slot = settings.command_record_slot;
+    if (slot >= MAX_SLOTS) return;
+
     buffer.reverse();
-    slots[selected_slot] = buffer;
+    slots[slot] = buffer;
     status = .Stopped;
 }
 
 fn startPlayback() void {
-    buffer = slots[selected_slot];
+    const slot = settings.command_record_slot;
+    if (slot >= MAX_SLOTS) return;
+
+    buffer.size = 0;
+    buffer = slots[slot];
     status = .Playback;
 }
 

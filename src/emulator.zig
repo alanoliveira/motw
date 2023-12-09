@@ -226,6 +226,10 @@ pub const Command = packed struct {
     c: bool = false,
     d: bool = false,
 
+    pub fn isSome(self: Command) bool {
+        return @as(u8, @bitCast(self)) != 0;
+    }
+
     fn fromRaw(raw_command: u8) Command {
         return @bitCast(~raw_command);
     }

@@ -2,9 +2,14 @@ const emu = @import("emulator.zig");
 
 const PLAYER1_OFFSET = 0x100400;
 const PLAYER2_OFFSET = 0x100500;
+const IS_PAUSED_OFFSET = 0x1041D2;
 
 pub const p1 = Player.new(PLAYER1_OFFSET);
 pub const p2 = Player.new(PLAYER2_OFFSET);
+
+pub fn isPaused() bool {
+    return emu.readMem(u8, IS_PAUSED_OFFSET) == 0xFF;
+}
 
 pub const Player = struct {
     pub const MAX_HEALTH = 120;

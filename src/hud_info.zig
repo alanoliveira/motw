@@ -3,8 +3,10 @@ const std = @import("std");
 const game = @import("game.zig");
 const util = @import("util.zig");
 const view = @import("view.zig");
+const settings = @import("settings.zig");
 
 pub fn run() void {
+    if (!settings.display_hud_info) return;
     Self.new(&game.p1, .P1).draw();
     Self.new(&game.p2, .P2).draw();
 }

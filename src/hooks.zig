@@ -1,11 +1,13 @@
 const std = @import("std");
 const win = @import("win32.zig");
 const emu = @import("emulator.zig");
+const game = @import("game.zig");
 const view = @import("view.zig");
 const input = @import("input.zig");
 const settings = @import("settings.zig");
 const save_state = @import("save_state.zig");
 const command_recorder = @import("command_recorder.zig");
+const menu = @import("menu.zig");
 const hud_info = @import("hud_info.zig");
 const Renderer = @import("renderer.zig");
 
@@ -21,15 +23,21 @@ pub fn runOpcode() callconv(.C) void {
 }
 
 pub fn runFrame() callconv(.C) u32 {
+    input.poll();
     view.update();
-    checkInputs();
-    hud_info.run();
+    if (game.isPaused()) {
+        menu.run();
+    } else {
+        checkInputs();
+        hud_info.run();
+    }
     return originalRunFrame();
 }
 
 pub fn gameTick() callconv(.C) void {
     const frame = emu.getFrameCount();
-    if (frame % settings.slowdown_divider == 0)
+    if (game.isPaused() or
+        (settings.slowdown_divider > 0 and frame % settings.slowdown_divider == 0))
         originalGameTick();
 }
 
@@ -49,21 +57,19 @@ pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT 
 }
 
 fn checkInputs() void {
-    input.poll();
-
     if (input.isPressed(.{ .Keyboard = .F7 })) {
         defer @import("root").shutdown();
     }
-    if (input.isPressed(.{ .Keyboard = .F3 })) {
-        save_state.save(settings.save_state_slot);
-    }
-    if (input.isPressed(.{ .Keyboard = .F4 })) {
-        save_state.load(settings.save_state_slot);
-    }
-    if (input.isPressed(.{ .Keyboard = .F9 })) {
+    if (settings.save_state_button) |btn| if (input.isPressed(btn)) {
+        save_state.save();
+    };
+    if (settings.load_state_button) |btn| if (input.isPressed(btn)) {
+        save_state.load();
+    };
+    if (settings.command_record_button) |btn| if (input.isPressed(btn)) {
         command_recorder.record();
-    }
-    if (input.isPressed(.{ .Keyboard = .F10 })) {
+    };
+    if (settings.command_playback_button) |btn| if (input.isPressed(btn)) {
         command_recorder.playback();
-    }
+    };
 }

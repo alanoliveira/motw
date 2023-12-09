@@ -1,5 +1,6 @@
 const emu = @import("emulator.zig");
 const view = @import("view.zig");
+const settings = @import("settings.zig");
 const command_recorder = @import("command_recorder.zig");
 
 pub const MAX_SLOTS = 10;
@@ -11,7 +12,8 @@ const State = struct {
 
 var states: [MAX_SLOTS]?State = .{null} ** MAX_SLOTS;
 
-pub fn save(slot: usize) void {
+pub fn save() void {
+    const slot = settings.save_state_slot;
     if (slot >= states.len) return;
 
     states[slot] = State{
@@ -21,7 +23,8 @@ pub fn save(slot: usize) void {
     view.drawText(view.Text.new("STATE {d} SAVED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
 }
 
-pub fn load(slot: usize) void {
+pub fn load() void {
+    const slot = settings.save_state_slot;
     if (slot >= states.len) return;
 
     if (states[slot]) |state| {
