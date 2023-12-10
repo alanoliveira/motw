@@ -1,0 +1,42 @@
+name: Continuous Deployment
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publishing
+    runs-on: windows-latest
+    steps:
+      # 
+      # - name: Setup Zig
+      #   uses: goto-bus-stop/setup-zig@v2.1.1
+      #   with:
+      #     version: 0.12.0 # this version is not available yet
+      - name: Installing Zig
+        run: |
+          Invoke-WebRequest -Uri "https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1808+69195d0cd.zip" `
+            -OutFile zig-windows-x86_64.zip
+          7z x zig-windows-x86_64.zip -oC:\Users\runneradmin\
+      - uses: actions/checkout@v3
+      - name: Building
+        run: C:\Users\runneradmin\zig-windows-x86_64-0.12.0-dev.1808+69195d0cd\zig.exe build
+      - name: Packaging final binary
+        shell: bash
+        run: |
+          cd zig-out/
+          RELEASE_NAME=motw
+          7z a -tzip $RELEASE_NAME.zip './bin/motw.exe' './lib/motw.dll'
+          certutil -hashfile $RELEASE_NAME.zip sha256 | grep -E [A-Fa-f0-9]{64} > $RELEASE_NAME.sha256
+      - name: Releasing assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            zig-out/motw.zip
+            zig-out/motw.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          command: publish
