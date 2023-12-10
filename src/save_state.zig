@@ -1,10 +1,10 @@
 const emu = @import("emulator.zig");
 const view = @import("view.zig");
-const settings = @import("settings.zig");
 const command_recorder = @import("command_recorder.zig");
 const command_history = @import("command_history.zig");
 
 pub const MAX_SLOTS = 10;
+var selected_slot: usize = 0;
 
 const State = struct {
     emulator_state: emu.State,
@@ -15,25 +15,24 @@ const State = struct {
 var states: [MAX_SLOTS]?State = .{null} ** MAX_SLOTS;
 
 pub fn save() void {
-    const slot = settings.save_state_slot;
-    if (slot >= states.len) return;
-
-    states[slot] = State{
+    states[selected_slot] = State{
         .emulator_state = emu.State.save(),
         .command_recorder_state = command_recorder.State.save(),
         .command_history_state = command_history.State.save(),
     };
-    view.drawText(view.Text.new("STATE {d} SAVED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
+    view.drawText(view.Text.new("STATE {d} SAVED", .{selected_slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
 }
 
 pub fn load() void {
-    const slot = settings.save_state_slot;
-    if (slot >= states.len) return;
-
-    if (states[slot]) |state| {
+    if (states[selected_slot]) |state| {
         state.emulator_state.load();
         state.command_recorder_state.load();
         state.command_history_state.load();
-        view.drawText(view.Text.new("STATE {d} LOADED", .{slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
+        view.drawText(view.Text.new("STATE {d} LOADED", .{selected_slot}, 0, 50, 0xFF0000AA), .{ .ttl = 60 });
     }
+}
+
+pub fn selectSlot(slot: usize) void {
+    if (slot >= states.len) return;
+    selected_slot = slot;
 }

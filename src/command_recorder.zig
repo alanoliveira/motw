@@ -1,14 +1,13 @@
 const std = @import("std");
 const emu = @import("emulator.zig");
 const view = @import("view.zig");
-const settings = @import("settings.zig");
 const Command = emu.Command;
 
 const Status = enum {
     Stopped,
     Prepare,
     Recording,
-    Playback,
+    Replay,
 };
 
 const Slot = struct {
@@ -40,6 +39,7 @@ const MAX_SLOTS = 10;
 var status: Status = .Stopped;
 var buffer: Slot = .{ .size = 0 };
 var slots: [MAX_SLOTS]Slot = undefined;
+var selected_slot: usize = 0;
 
 pub fn process() void {
     switch (status) {
@@ -55,9 +55,9 @@ pub fn process() void {
             }
             view.drawText(view.Text.new("REC {d}", .{buffer.size}, 0, 50, 0xFFFF0000), .{});
         },
-        .Playback => {
+        .Replay => {
             const recorded = buffer.pop() orelse {
-                stopPlayback();
+                stopReplay();
                 return;
             };
             emu.setCommand(.P2, recorded);
@@ -76,12 +76,17 @@ pub fn record() void {
     }
 }
 
-pub fn playback() void {
+pub fn replay() void {
     switch (status) {
-        .Stopped => startPlayback(),
-        .Playback => stopPlayback(),
+        .Stopped => startReplay(),
+        .Replay => stopReplay(),
         else => cancel(),
     }
+}
+
+pub fn selectSlot(slot: usize) void {
+    if (slot >= MAX_SLOTS) return;
+    selected_slot = slot;
 }
 
 fn prepareRecording() void {
@@ -94,24 +99,18 @@ fn startRecording() void {
 }
 
 fn stopRecording() void {
-    const slot = settings.command_record_slot;
-    if (slot >= MAX_SLOTS) return;
-
     buffer.reverse();
-    slots[slot] = buffer;
+    slots[selected_slot] = buffer;
     status = .Stopped;
 }
 
-fn startPlayback() void {
-    const slot = settings.command_record_slot;
-    if (slot >= MAX_SLOTS) return;
-
+fn startReplay() void {
     buffer.size = 0;
-    buffer = slots[slot];
-    status = .Playback;
+    buffer = slots[selected_slot];
+    status = .Replay;
 }
 
-fn stopPlayback() void {
+fn stopReplay() void {
     status = .Stopped;
 }
 

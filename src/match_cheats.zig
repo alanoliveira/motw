@@ -1,6 +1,31 @@
 const std = @import("std");
+const emu = @import("emulator.zig");
 const game = @import("game.zig");
-const settings = @import("settings.zig");
+const input = @import("input.zig");
+const save_state = @import("save_state.zig");
+const command_recorder = @import("command_recorder.zig");
+
+pub const PlayerSettings = struct {
+    health: ?u8 = null,
+    power: ?u8 = null,
+    guard: ?u8 = null,
+    top: ?bool = null,
+
+    fn apply(self: PlayerSettings, player: *game.Player) void {
+        if (self.health) |val| player.setHealth(val);
+        if (self.power) |val| player.setPower(val);
+        if (self.guard) |val| player.setGuard(val);
+        if (self.top) |val| player.setTop(val);
+    }
+};
+
+pub var p1_settings: PlayerSettings = .{};
+pub var p2_settings: PlayerSettings = .{};
+pub var save_state_button: ?input.VirtualKey = null;
+pub var load_state_button: ?input.VirtualKey = null;
+pub var command_record_button: ?input.VirtualKey = null;
+pub var command_replay_button: ?input.VirtualKey = null;
+pub var slowdown: u32 = 1;
 
 pub fn run() void {
     var p1 = game.p1;
@@ -10,14 +35,36 @@ pub fn run() void {
     match.setTimer(game.Match.MAX_TIME);
 
     if (p1.getStatus().isNeutral() and p2.getStatus().isNeutral()) {
-        playerCheats(&p1, settings.p1_settings);
-        playerCheats(&p2, settings.p2_settings);
+        p1_settings.apply(&p1);
+        p2_settings.apply(&p2);
     }
+
+    checkInputs();
 }
 
-fn playerCheats(player: *game.Player, player_settings: settings.PlayerSettings) void {
-    if (player_settings.health) |val| player.setHealth(val);
-    if (player_settings.power) |val| player.setPower(val);
-    if (player_settings.guard) |val| player.setGuard(val);
-    if (player_settings.top) |val| player.setTop(val);
+pub fn gameTick() bool {
+    const frame = emu.getFrameCount();
+    return slowdown > 0 and frame % slowdown == 0;
+}
+
+fn checkInputs() void {
+    if (input.isPressed(.{ .Keyboard = .F7 })) {
+        defer @import("root").shutdown();
+    }
+
+    if (save_state_button) |btn| if (input.isPressed(btn)) {
+        save_state.save();
+    };
+
+    if (load_state_button) |btn| if (input.isPressed(btn)) {
+        save_state.load();
+    };
+
+    if (command_record_button) |btn| if (input.isPressed(btn)) {
+        command_recorder.record();
+    };
+
+    if (command_replay_button) |btn| if (input.isPressed(btn)) {
+        command_recorder.replay();
+    };
 }

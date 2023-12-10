@@ -4,13 +4,11 @@ const emu = @import("emulator.zig");
 const game = @import("game.zig");
 const view = @import("view.zig");
 const input = @import("input.zig");
-const settings = @import("settings.zig");
-const save_state = @import("save_state.zig");
 const match_cheats = @import("match_cheats.zig");
 const command_recorder = @import("command_recorder.zig");
 const command_history = @import("command_history.zig");
 const hitbox_viewer = @import("hitbox_viewer.zig");
-const menu = @import("menu.zig");
+const options = @import("options.zig");
 const hud_info = @import("hud_info.zig");
 const Renderer = @import("renderer.zig");
 
@@ -35,9 +33,8 @@ pub fn runFrame() callconv(.C) u32 {
     input.poll();
     view.update();
     if (game.isPaused()) {
-        menu.run();
+        options.run();
     } else {
-        checkInputs();
         match_cheats.run();
         hud_info.run();
         command_history.draw();
@@ -47,12 +44,9 @@ pub fn runFrame() callconv(.C) u32 {
 }
 
 pub fn gameTick() callconv(.C) void {
-    if (!emu.isEmulationRunning()) return;
+    if (!emu.isEmulationRunning() or game.isPaused()) originalGameTick();
 
-    const frame = emu.getFrameCount();
-    if (game.isPaused() or
-        (settings.slowdown_divider > 0 and frame % settings.slowdown_divider == 0))
-        originalGameTick();
+    if (match_cheats.gameTick()) originalGameTick();
 }
 
 pub fn writeInput(ipt: u32) callconv(.C) void {
@@ -75,22 +69,4 @@ pub fn endScene(device: *win.IDirect3DDevice9) callconv(win.WINAPI) win.HRESULT 
 
     renderer.deinitialize() catch {};
     return originalEndScene(device);
-}
-
-fn checkInputs() void {
-    if (input.isPressed(.{ .Keyboard = .F7 })) {
-        defer @import("root").shutdown();
-    }
-    if (settings.save_state_button) |btn| if (input.isPressed(btn)) {
-        save_state.save();
-    };
-    if (settings.load_state_button) |btn| if (input.isPressed(btn)) {
-        save_state.load();
-    };
-    if (settings.command_record_button) |btn| if (input.isPressed(btn)) {
-        command_recorder.record();
-    };
-    if (settings.command_playback_button) |btn| if (input.isPressed(btn)) {
-        command_recorder.playback();
-    };
 }

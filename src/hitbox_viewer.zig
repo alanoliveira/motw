@@ -2,7 +2,6 @@ const std = @import("std");
 const emu = @import("emulator.zig");
 const game = @import("game.zig");
 const view = @import("view.zig");
-const settings = @import("settings.zig");
 
 const HALF_GAME_SCREEN = 160;
 const GROUND_OFFSET = 24;
@@ -16,11 +15,12 @@ const BOX_COLORS = [_]struct { fill: u32, outline: u32 }{
     .{ .fill = 0xAAFFFFFF, .outline = 0xFFFFFFFF },
 };
 
+pub var enabled = true;
 var screen_x: i32 = 0;
 var screen_y: i32 = 0;
 
 pub fn run() void {
-    if (!settings.display_hitboxes) return;
+    if (!enabled) return;
 
     const stage = game.getObject(.{ .Constant = .Stage }).?;
     screen_x = stage.getX();

@@ -2,7 +2,6 @@ const std = @import("std");
 const emu = @import("emulator.zig");
 const util = @import("util.zig");
 const view = @import("view.zig");
-const settings = @import("settings.zig");
 const BUTTON_DISPLAY = std.ComptimeStringMap(struct { color: u32, label: []const u8 }, .{
     .{ "a", .{ .color = 0xFFFF0000, .label = "A" } },
     .{ "b", .{ .color = 0xFFFFFF00, .label = "B" } },
@@ -10,6 +9,8 @@ const BUTTON_DISPLAY = std.ComptimeStringMap(struct { color: u32, label: []const
     .{ "d", .{ .color = 0xFF7777FF, .label = "D" } },
 });
 
+pub var display_p1_inputs: bool = true;
+pub var display_p2_inputs: bool = true;
 var p1_history: PlayerHistory = .{};
 var p2_history: PlayerHistory = .{};
 
@@ -19,11 +20,11 @@ pub fn update() void {
 }
 
 pub fn draw() void {
-    if (settings.display_p1_inputs) {
+    if (display_p1_inputs) {
         drawPlayerHistory(p1_history, .Left);
     }
 
-    if (settings.display_p2_inputs) {
+    if (display_p2_inputs) {
         drawPlayerHistory(p2_history, .Right);
     }
 }
