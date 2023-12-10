@@ -29,10 +29,8 @@ pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) call
 }
 
 fn initialize() !void {
-    if (build_options.attach_console) {
-        _ = win.AllocConsole();
-        errdefer _ = win.FreeConsole();
-    }
+    _ = win.AllocConsole();
+    errdefer _ = win.FreeConsole();
 
     std.debug.print("Getting game process address\n", .{});
     const base_addr = win.GetModuleHandleA(null) orelse {
@@ -109,9 +107,7 @@ fn deinitialize() !void {
         return err;
     };
 
-    if (build_options.attach_console) {
-        _ = win.FreeConsole();
-    }
+    _ = win.FreeConsole();
 }
 
 pub fn shutdown() void {

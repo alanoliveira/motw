@@ -27,7 +27,6 @@ pub fn runOpcode() callconv(.C) void {
 }
 
 pub fn runFrame() callconv(.C) u32 {
-    if (emu.isOnlineMode()) std.os.exit(1);
     if (!emu.isEmulationRunning()) return originalRunFrame();
 
     input.poll();
