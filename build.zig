@@ -40,6 +40,9 @@ pub fn build(b: *std.Build) void {
     minhook.linkLibC();
     b.installArtifact(minhook);
 
+    const build_options = b.addOptions();
+    build_options.addOption(bool, "attach_console", b.option(bool, "attach-console", "Enable attaching console") orelse false);
+
     const lib = b.addSharedLibrary(.{
         .name = "motw",
         // In this case the main source file is merely a path, however, in more
@@ -53,6 +56,7 @@ pub fn build(b: *std.Build) void {
     lib.linkLibrary(minhook);
     lib.addIncludePath(.{ .path = "./vendor/font8x8/" });
     lib.linkLibC();
+    lib.addOptions("build_options", build_options);
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when

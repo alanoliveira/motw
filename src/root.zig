@@ -4,6 +4,7 @@ const mh = @import("minhook.zig");
 const emu = @import("emulator.zig");
 const hooks = @import("hooks.zig");
 const view = @import("view.zig");
+const build_options = @import("build_options");
 
 var SELF_HANDLE: win.HANDLE = undefined;
 var sutting_down = false;
@@ -28,8 +29,10 @@ pub export fn DllMain(handle: win.HANDLE, reason: win.DWORD, _: win.LPVOID) call
 }
 
 fn initialize() !void {
-    _ = win.AllocConsole();
-    errdefer _ = win.FreeConsole();
+    if (build_options.attach_console) {
+        _ = win.AllocConsole();
+        errdefer _ = win.FreeConsole();
+    }
 
     std.debug.print("Getting game process address\n", .{});
     const base_addr = win.GetModuleHandleA(null) orelse {
@@ -106,7 +109,9 @@ fn deinitialize() !void {
         return err;
     };
 
-    _ = win.FreeConsole();
+    if (build_options.attach_console) {
+        _ = win.FreeConsole();
+    }
 }
 
 pub fn shutdown() void {
