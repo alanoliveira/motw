@@ -48,10 +48,6 @@ pub fn gameTick() bool {
 }
 
 fn checkInputs() void {
-    if (input.isPressed(.{ .Keyboard = .F7 })) {
-        defer @import("root").shutdown();
-    }
-
     if (save_state_button) |btn| if (input.isPressed(btn)) {
         save_state.save();
     };

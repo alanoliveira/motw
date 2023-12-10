@@ -27,10 +27,14 @@ pub fn runOpcode() callconv(.C) void {
 }
 
 pub fn runFrame() callconv(.C) u32 {
-    if (emu.isOnlineMode()) @import("root").shutdown();
+    if (emu.isOnlineMode()) std.os.exit(1);
     if (!emu.isEmulationRunning()) return originalRunFrame();
 
     input.poll();
+    if (input.isPressed(.{ .Keyboard = .F7 })) {
+        defer @import("root").shutdown();
+    }
+
     view.update();
     if (game.isPaused()) {
         options.run();
