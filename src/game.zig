@@ -170,6 +170,7 @@ pub const Object = struct {
     const HITBOX_PTR_OFFSET = 0x7A;
     const INVULNERABILITY_OFFSET = 0xB3;
     const INSTRUCTION_PTR_OFFSET = 0x00;
+    const PUSHABLE_OFFSET = 0xEE;
 
     const Instruction = enum(u16) {
         RTS = 0x4E75,
@@ -278,6 +279,10 @@ pub const Object = struct {
 
     pub fn getHitboxAddress(self: *const Object) u32 {
         return emu.readMem(u32, self.base_addr + HITBOX_PTR_OFFSET);
+    }
+
+    pub fn isPushable(self: *const Object) bool {
+        return emu.readMem(u16, self.base_addr + PUSHABLE_OFFSET) == 0;
     }
 
     // it is in 0x0355C6 @TODO: remove all magic numbers

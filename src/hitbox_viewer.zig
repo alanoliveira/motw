@@ -61,7 +61,9 @@ fn drawBoxes(object: game.Object) void {
         !(object.isFacingRight() and object.isTurning());
     const invul = object.isInvulnerable();
 
-    drawBox(id, object.getPushboxAddress(), x, y, invul, flip);
+    if (object.isPushable()) {
+        drawBox(id, object.getPushboxAddress(), x, y, invul, flip);
+    }
     drawBox(id, object.getHitboxAddress(), x, y, invul, flip);
 }
 

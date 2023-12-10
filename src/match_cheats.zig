@@ -6,8 +6,8 @@ const save_state = @import("save_state.zig");
 const command_recorder = @import("command_recorder.zig");
 
 pub const PlayerSettings = struct {
-    health: ?u8 = null,
-    power: ?u8 = null,
+    health: ?u8 = game.Player.MAX_HEALTH,
+    power: ?u8 = game.Player.P_POWER,
     guard: ?u8 = null,
     top: ?bool = null,
 
