@@ -2,6 +2,9 @@ const Self = @This();
 const std = @import("std");
 const win = @import("win32.zig");
 
+const GLYPH_WIDTH = 8;
+const GLYPH_HEIGHT = 8;
+
 const font8x8 = @cImport({
     @cInclude("font8x8.h");
 });
@@ -33,7 +36,8 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
         return error.LockRectError;
     }
 
-    const bmp_data: [*]u32 = @alignCast(@ptrCast(lock_rect.pBits));
+    const bmp_data: [*]u8 = @alignCast(@ptrCast(lock_rect.pBits));
+    const pitch: usize = @intCast(lock_rect.Pitch);
     for (0..(font8x8.font8x8_basic.len + SYMBOLS_BMP.len)) |i| {
         const glyph = if (i < font8x8.font8x8_basic.len)
             font8x8.font8x8_basic[i]
@@ -42,7 +46,11 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
         for (glyph, 0..) |glyph_row, y| {
             for (0..8) |x| {
                 const bit = std.math.shr(u8, glyph_row, x) & 1;
-                bmp_data[(i * 8 + y) * 32 + x] = if (bit != 0) 0xFFFFFFFF else 0;
+                const idx = (i * GLYPH_HEIGHT + y) * pitch + x * 4;
+                bmp_data[idx + 0] = if (bit != 0) 0xFF else 0;
+                bmp_data[idx + 1] = if (bit != 0) 0xFF else 0;
+                bmp_data[idx + 2] = if (bit != 0) 0xFF else 0;
+                bmp_data[idx + 3] = if (bit != 0) 0xFF else 0;
             }
         }
     }
