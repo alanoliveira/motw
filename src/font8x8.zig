@@ -28,11 +28,14 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
 
     var surface: ?*win.IDirect3DSurface9 = null;
     if (texture.?.vtable.GetSurfaceLevel(texture.?, 0, &surface) != win.S_OK) {
+        std.debug.print("Error on texture.GetSurfaceLevel\n", .{});
         return error.GetSurfaceLevelError;
     }
 
+    std.debug.print("Loading glyphs...\n", .{});
     var lock_rect: win.D3DLOCKED_RECT = undefined;
     if (surface.?.vtable.LockRect(surface.?, &lock_rect, null, win.D3DLOCK_DISCARD) != win.S_OK) {
+        std.debug.print("Error on surface.LockRect\n", .{});
         return error.LockRectError;
     }
 
@@ -56,11 +59,14 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
     }
 
     if (surface.?.vtable.UnlockRect(surface.?) != win.S_OK) {
+        std.debug.print("Error on surface.UnlockRect\n", .{});
         return error.UnlockRectError;
     }
+    std.debug.print("Done.\n", .{});
 
     var sprite: ?*win.ID3DXSprite = null;
     if (win.D3DXCreateSprite(@ptrCast(device), &sprite) != win.S_OK) {
+        std.debug.print("Error on D3DXCreateSprite\n", .{});
         return error.CreateSpriteError;
     }
 

@@ -77,8 +77,9 @@ pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
     if (self.device != device) {
         self.device = device;
 
+        std.debug.print("Creating render target texture\n", .{});
         if (self.texture) |texture| _ = texture.IUnknown_Release();
-        _ = device.IDirect3DDevice9_CreateTexture(
+        if (!win.SUCCEEDED(device.IDirect3DDevice9_CreateTexture(
             @intFromFloat(SCREEN_WIDTH * SCALE),
             @intFromFloat(SCREEN_HEIGHT * SCALE),
             1,
@@ -87,31 +88,65 @@ pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
             win.D3DPOOL_DEFAULT,
             &self.texture,
             null,
-        );
+        ))) {
+            std.debug.print("Error on create render target texture\n", .{});
+            return error.TextureCreateError;
+        }
 
+        std.debug.print("Creating font8x8\n", .{});
         if (self.font8x8) |*font8x8| _ = font8x8.deinitialize();
         self.font8x8 = try Font8x8.initialize(device);
+        std.debug.print("Font8x8 created\n", .{});
     }
 
     self.original_settings = try D3D9Settings.extract(self.device);
     try D3D9Settings.CUSTOM_SETTINGS.apply(self.device);
 
-    _ = device.IDirect3DDevice9_GetRenderTarget(0, &self.original_render_target);
+    if (!win.SUCCEEDED(device.IDirect3DDevice9_GetRenderTarget(0, &self.original_render_target))) {
+        std.debug.print("Error on get original render target\n", .{});
+        return error.RenderTargetGetError;
+    }
+
     var render_target: ?*win.IDirect3DSurface9 = null;
-    _ = self.texture.?.IDirect3DTexture9_GetSurfaceLevel(0, &render_target);
-    _ = self.device.IDirect3DDevice9_SetRenderTarget(0, render_target);
+    if (!win.SUCCEEDED(self.texture.?.IDirect3DTexture9_GetSurfaceLevel(0, &render_target))) {
+        std.debug.print("Error on get render target surface\n", .{});
+        return error.RenderTargetGetError;
+    }
+
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetRenderTarget(0, render_target))) {
+        std.debug.print("Error on set render target\n", .{});
+        return error.RenderTargetSetError;
+    }
+    errdefer _ = self.device.IDirect3DDevice9_SetRenderTarget(0, self.original_render_target);
+
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetTexture(0, null))) {
+        std.debug.print("Error on set texture\n", .{});
+        return error.TextureSetError;
+    }
     _ = self.device.IDirect3DDevice9_Clear(0, null, win.D3DCLEAR_TARGET, 0, 1.0, 0);
 }
 
 pub fn deinitialize(self: *Self) !void {
-    _ = self.device.IDirect3DDevice9_SetRenderTarget(0, self.original_render_target);
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetRenderTarget(0, self.original_render_target))) {
+        std.debug.print("Error on set original render target\n", .{});
+        return error.RenderTargetSetError;
+    }
 
     var viewPort: win.D3DVIEWPORT9 = undefined;
-    if (self.device.IDirect3DDevice9_GetViewport(&viewPort) != win.S_OK) {
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_GetViewport(&viewPort))) {
+        std.debug.print("Error on get viewport\n", .{});
         return error.ViewPortGetError;
     }
-    _ = self.device.IDirect3DDevice9_SetTexture(0, @ptrCast(self.texture));
-    _ = self.device.IDirect3DDevice9_SetFVF(win.D3DFVF_XYZRHW | win.D3DFVF_TEX1);
+
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetTexture(0, @ptrCast(self.texture)))) {
+        std.debug.print("Error on set texture\n", .{});
+        return error.TextureSetError;
+    }
+
+    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetFVF(win.D3DFVF_XYZRHW | win.D3DFVF_TEX1))) {
+        std.debug.print("Error on set FVF\n", .{});
+        return error.FVFSetError;
+    }
 
     const width: f32 = @floatFromInt(viewPort.Width);
     const height: f32 = @floatFromInt(viewPort.Height);
