@@ -4,6 +4,7 @@ const game = @import("game.zig");
 const input = @import("input.zig");
 const emu = @import("emulator.zig");
 const match_cheats = @import("match_cheats.zig");
+const hitbox_viewer = @import("hitbox_viewer.zig");
 
 const SELECTED_COLOR = 0xFFFF0000;
 const UNSELECTED_COLOR = 0xFFFFFFFF;
@@ -67,6 +68,7 @@ var options = [_]Option{
     .{ .label = "Load State Button", .value = .{ .Button = &match_cheats.load_state_button }, .action = &changeLoadStateBtn },
     .{ .label = "Command Record Button", .value = .{ .Button = &match_cheats.command_record_button }, .action = &changeCommandRecordBtn },
     .{ .label = "Command Replay Button", .value = .{ .Button = &match_cheats.command_replay_button }, .action = &changeCommandReplayBtn },
+    .{ .label = "Display Hitboxes", .value = .{ .Bool = true }, .action = &toggleHitboxes },
 };
 var selected_index: usize = 0;
 var key_poll: ?KeyPoll = null;
@@ -202,4 +204,10 @@ fn changeCommandRecordBtn(val: *Option.Value, command: emu.Command) void {
 fn changeCommandReplayBtn(val: *Option.Value, command: emu.Command) void {
     if (!command.a) return;
     key_poll = KeyPoll{ .target = val.Button };
+}
+
+fn toggleHitboxes(val: *Option.Value, command: emu.Command) void {
+    if (command.direction != .Left and command.direction != .Right) return;
+    val.Bool = !val.Bool;
+    hitbox_viewer.enabled = val.Bool;
 }
