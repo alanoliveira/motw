@@ -11,19 +11,13 @@ jobs:
     name: Publishing
     runs-on: windows-latest
     steps:
-      # 
-      # - name: Setup Zig
-      #   uses: goto-bus-stop/setup-zig@v2.1.1
-      #   with:
-      #     version: 0.12.0 # this version is not available yet
-      - name: Installing Zig
-        run: |
-          Invoke-WebRequest -Uri "https://ziglang.org/builds/zig-windows-x86_64-0.12.0-dev.1808+69195d0cd.zip" `
-            -OutFile zig-windows-x86_64.zip
-          7z x zig-windows-x86_64.zip -oC:\Users\runneradmin\
+      - name: Setup Zig
+        uses: goto-bus-stop/setup-zig@v2.1.1
+        with:
+          version: 0.12.0
       - uses: actions/checkout@v3
       - name: Building
-        run: C:\Users\runneradmin\zig-windows-x86_64-0.12.0-dev.1808+69195d0cd\zig.exe build
+        run: zig.exe build
       - name: Packaging final binary
         shell: bash
         run: |
