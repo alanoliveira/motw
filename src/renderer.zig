@@ -23,33 +23,33 @@ const D3D9Settings = struct {
 
     fn extract(device: *const win.IDirect3DDevice9) !D3D9Settings {
         var cur: D3D9Settings = undefined;
-        if (device.IDirect3DDevice9_GetRenderState(.ALPHABLENDENABLE, &cur.alphaBlendEnable) != win.S_OK or
-            device.IDirect3DDevice9_GetRenderState(.DESTBLEND, &cur.destBlend) != win.S_OK or
-            device.IDirect3DDevice9_GetRenderState(.SRCBLEND, &cur.srcBlend) != win.S_OK or
-            device.IDirect3DDevice9_GetRenderState(.DESTBLENDALPHA, &cur.destBlendAlpha) != win.S_OK or
-            device.IDirect3DDevice9_GetRenderState(.SRCBLENDALPHA, &cur.srcBlendAlpha) != win.S_OK or
-            device.IDirect3DDevice9_GetSamplerState(0, .MAGFILTER, &cur.magfilter) != win.S_OK or
-            device.IDirect3DDevice9_GetSamplerState(0, .MINFILTER, &cur.minfilter) != win.S_OK or
-            device.IDirect3DDevice9_GetSamplerState(0, .MIPFILTER, &cur.mipfilter) != win.S_OK or
-            device.IDirect3DDevice9_GetFVF(&cur.fvf) != win.S_OK or
-            device.IDirect3DDevice9_GetPixelShader(&cur.pixelShader) != win.S_OK or
-            device.IDirect3DDevice9_GetTexture(0, &cur.texture) != win.S_OK) return error.ExtractSettingsError;
+        if (device.GetRenderState(.ALPHABLENDENABLE, &cur.alphaBlendEnable) != win.S_OK or
+            device.GetRenderState(.DESTBLEND, &cur.destBlend) != win.S_OK or
+            device.GetRenderState(.SRCBLEND, &cur.srcBlend) != win.S_OK or
+            device.GetRenderState(.DESTBLENDALPHA, &cur.destBlendAlpha) != win.S_OK or
+            device.GetRenderState(.SRCBLENDALPHA, &cur.srcBlendAlpha) != win.S_OK or
+            device.GetSamplerState(0, .MAGFILTER, &cur.magfilter) != win.S_OK or
+            device.GetSamplerState(0, .MINFILTER, &cur.minfilter) != win.S_OK or
+            device.GetSamplerState(0, .MIPFILTER, &cur.mipfilter) != win.S_OK or
+            device.GetFVF(&cur.fvf) != win.S_OK or
+            device.GetPixelShader(&cur.pixelShader) != win.S_OK or
+            device.GetTexture(0, &cur.texture) != win.S_OK) return error.ExtractSettingsError;
 
         return cur;
     }
 
     fn apply(self: *const D3D9Settings, device: *const win.IDirect3DDevice9) !void {
-        if (device.IDirect3DDevice9_SetRenderState(.ALPHABLENDENABLE, self.alphaBlendEnable) != win.S_OK or
-            device.IDirect3DDevice9_SetRenderState(.DESTBLEND, self.destBlend) != win.S_OK or
-            device.IDirect3DDevice9_SetRenderState(.SRCBLEND, self.srcBlend) != win.S_OK or
-            device.IDirect3DDevice9_SetRenderState(.DESTBLENDALPHA, self.destBlendAlpha) != win.S_OK or
-            device.IDirect3DDevice9_SetRenderState(.SRCBLENDALPHA, self.srcBlendAlpha) != win.S_OK or
-            device.IDirect3DDevice9_SetSamplerState(0, .MAGFILTER, self.magfilter) != win.S_OK or
-            device.IDirect3DDevice9_SetSamplerState(0, .MINFILTER, self.minfilter) != win.S_OK or
-            device.IDirect3DDevice9_SetSamplerState(0, .MIPFILTER, self.mipfilter) != win.S_OK or
-            device.IDirect3DDevice9_SetPixelShader(self.pixelShader) != win.S_OK or
-            device.IDirect3DDevice9_SetFVF(self.fvf) != win.S_OK or
-            device.IDirect3DDevice9_SetTexture(0, self.texture) != win.S_OK) return error.ApplySettingsError;
+        if (device.SetRenderState(.ALPHABLENDENABLE, self.alphaBlendEnable) != win.S_OK or
+            device.SetRenderState(.DESTBLEND, self.destBlend) != win.S_OK or
+            device.SetRenderState(.SRCBLEND, self.srcBlend) != win.S_OK or
+            device.SetRenderState(.DESTBLENDALPHA, self.destBlendAlpha) != win.S_OK or
+            device.SetRenderState(.SRCBLENDALPHA, self.srcBlendAlpha) != win.S_OK or
+            device.SetSamplerState(0, .MAGFILTER, self.magfilter) != win.S_OK or
+            device.SetSamplerState(0, .MINFILTER, self.minfilter) != win.S_OK or
+            device.SetSamplerState(0, .MIPFILTER, self.mipfilter) != win.S_OK or
+            device.SetPixelShader(self.pixelShader) != win.S_OK or
+            device.SetFVF(self.fvf) != win.S_OK or
+            device.SetTexture(0, self.texture) != win.S_OK) return error.ApplySettingsError;
     }
 
     const CUSTOM_SETTINGS: D3D9Settings = D3D9Settings{
@@ -78,8 +78,8 @@ pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
         self.device = device;
 
         std.debug.print("Creating render target texture\n", .{});
-        if (self.texture) |texture| _ = texture.IUnknown_Release();
-        if (!win.SUCCEEDED(device.IDirect3DDevice9_CreateTexture(
+        if (self.texture) |texture| _ = texture.IUnknown.Release();
+        if (!win.SUCCEEDED(device.CreateTexture(
             @intFromFloat(SCREEN_WIDTH * SCALE),
             @intFromFloat(SCREEN_HEIGHT * SCALE),
             1,
@@ -102,48 +102,48 @@ pub fn initialize(self: *Self, device: *win.IDirect3DDevice9) !void {
     self.original_settings = try D3D9Settings.extract(self.device);
     try D3D9Settings.CUSTOM_SETTINGS.apply(self.device);
 
-    if (!win.SUCCEEDED(device.IDirect3DDevice9_GetRenderTarget(0, &self.original_render_target))) {
+    if (!win.SUCCEEDED(device.GetRenderTarget(0, &self.original_render_target))) {
         std.debug.print("Error on get original render target\n", .{});
         return error.RenderTargetGetError;
     }
 
     var render_target: ?*win.IDirect3DSurface9 = null;
-    if (!win.SUCCEEDED(self.texture.?.IDirect3DTexture9_GetSurfaceLevel(0, &render_target))) {
+    if (!win.SUCCEEDED(self.texture.?.GetSurfaceLevel(0, &render_target))) {
         std.debug.print("Error on get render target surface\n", .{});
         return error.RenderTargetGetError;
     }
 
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetRenderTarget(0, render_target))) {
+    if (!win.SUCCEEDED(self.device.SetRenderTarget(0, render_target))) {
         std.debug.print("Error on set render target\n", .{});
         return error.RenderTargetSetError;
     }
-    errdefer _ = self.device.IDirect3DDevice9_SetRenderTarget(0, self.original_render_target);
+    errdefer _ = self.device.SetRenderTarget(0, self.original_render_target);
 
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetTexture(0, null))) {
+    if (!win.SUCCEEDED(self.device.SetTexture(0, null))) {
         std.debug.print("Error on set texture\n", .{});
         return error.TextureSetError;
     }
-    _ = self.device.IDirect3DDevice9_Clear(0, null, win.D3DCLEAR_TARGET, 0, 1.0, 0);
+    _ = self.device.Clear(0, null, win.D3DCLEAR_TARGET, 0, 1.0, 0);
 }
 
 pub fn deinitialize(self: *Self) !void {
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetRenderTarget(0, self.original_render_target))) {
+    if (!win.SUCCEEDED(self.device.SetRenderTarget(0, self.original_render_target))) {
         std.debug.print("Error on set original render target\n", .{});
         return error.RenderTargetSetError;
     }
 
     var viewPort: win.D3DVIEWPORT9 = undefined;
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_GetViewport(&viewPort))) {
+    if (!win.SUCCEEDED(self.device.GetViewport(&viewPort))) {
         std.debug.print("Error on get viewport\n", .{});
         return error.ViewPortGetError;
     }
 
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetTexture(0, @ptrCast(self.texture)))) {
+    if (!win.SUCCEEDED(self.device.SetTexture(0, @ptrCast(self.texture)))) {
         std.debug.print("Error on set texture\n", .{});
         return error.TextureSetError;
     }
 
-    if (!win.SUCCEEDED(self.device.IDirect3DDevice9_SetFVF(win.D3DFVF_XYZRHW | win.D3DFVF_TEX1))) {
+    if (!win.SUCCEEDED(self.device.SetFVF(win.D3DFVF_XYZRHW | win.D3DFVF_TEX1))) {
         std.debug.print("Error on set FVF\n", .{});
         return error.FVFSetError;
     }
@@ -164,7 +164,7 @@ pub fn deinitialize(self: *Self) !void {
         .{ .x = width, .y = height, .z = 0.0, .rhw = 1.0, .u = 1.0, .v = 1.0 },
     };
 
-    if (self.device.IDirect3DDevice9_DrawPrimitiveUP(
+    if (self.device.DrawPrimitiveUP(
         win.D3DPRIMITIVETYPE.TRIANGLESTRIP,
         2,
         &vertices,
@@ -189,7 +189,7 @@ pub fn drawLine(self: *const Self, x1: i32, y1: i32, x2: i32, y2: i32, color: u3
         Vertex{ .x = screen_x2, .y = screen_y2, .z = z, .rhw = rhw, .color = color },
     };
 
-    if (self.device.IDirect3DDevice9_DrawPrimitiveUP(
+    if (self.device.DrawPrimitiveUP(
         win.D3DPRIMITIVETYPE.LINELIST,
         1,
         &vertices,
@@ -214,7 +214,7 @@ pub fn drawRectFill(self: *const Self, x1: i32, y1: i32, x2: i32, y2: i32, color
         Vertex{ .x = screen_x2, .y = screen_y2, .z = z, .rhw = rhw, .color = color },
     };
 
-    if (self.device.IDirect3DDevice9_DrawPrimitiveUP(
+    if (self.device.DrawPrimitiveUP(
         win.D3DPRIMITIVETYPE.TRIANGLESTRIP,
         2,
         &fill_vertices,
@@ -240,7 +240,7 @@ pub fn drawRectOutline(self: *const Self, x1: i32, y1: i32, x2: i32, y2: i32, co
         Vertex{ .x = screen_x1, .y = screen_y1, .z = z, .rhw = rhw, .color = color },
     };
 
-    if (self.device.IDirect3DDevice9_DrawPrimitiveUP(
+    if (self.device.DrawPrimitiveUP(
         win.D3DPRIMITIVETYPE.LINESTRIP,
         4,
         &outline_vertices,

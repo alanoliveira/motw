@@ -32,7 +32,7 @@ pub fn inject(dll_path: []const u8, proc_name: []const u8) InjectorError!void {
     const pid = getPidByProcName(proc_name) orelse return InjectorError.ProcNotFound;
 
     const proc_handle = win.OpenProcess(
-        .ALL_ACCESS,
+        win.PROCESS_ALL_ACCESS,
         win.FALSE,
         pid,
     ) orelse return InjectorError.OpenProcError;
@@ -42,7 +42,7 @@ pub fn inject(dll_path: []const u8, proc_name: []const u8) InjectorError!void {
 
 fn getPidByProcName(proc_name: []const u8) ?u32 {
     const snapshot = win.CreateToolhelp32Snapshot(
-        .SNAPPROCESS,
+        win.TH32CS_SNAPPROCESS,
         0,
     ) orelse return null;
     defer _ = win.CloseHandle(snapshot);
@@ -63,8 +63,8 @@ fn load_dll(proc_handle: win.HANDLE, dll_path: []const u8) bool {
         proc_handle,
         null,
         dll_path.len,
-        win.VIRTUAL_ALLOCATION_TYPE.initFlags(.{ .RESERVE = 1, .COMMIT = 1 }),
-        .PAGE_READWRITE,
+        win.VIRTUAL_ALLOCATION_TYPE{ .RESERVE = 1, .COMMIT = 1 },
+        win.PAGE_READWRITE,
     ) orelse return false;
     defer _ = win.VirtualFreeEx(proc_handle, buff, 0, .RELEASE);
 
