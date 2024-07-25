@@ -1,5 +1,5 @@
 const std = @import("std");
-const mh = @cImport(@cInclude("minhook.h"));
+const mh = @cImport(@cInclude("MinHook.h"));
 
 pub const ALL_HOOKS = mh.MH_ALL_HOOKS;
 
