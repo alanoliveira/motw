@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/alanoliveira/motw/compare/v1.1.0...v1.2.0) (2024-07-25)
+
+
+### Features
+
+* update zigwin32 ([990997b](https://github.com/alanoliveira/motw/commit/990997b58188a63b337d136d107d197a216bd48b))
+
 ## [1.1.0](https://github.com/alanoliveira/motw/compare/v1.0.0...v1.1.0) (2024-07-25)
 
 
