@@ -44,14 +44,14 @@ pub fn build(b: *std.Build) void {
         .name = "motw",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    lib.addModule("zigwin32", zigwin32.module("zigwin32"));
-    lib.addIncludePath(.{ .path = "./vendor/minhook/include/" });
+    lib.root_module.addImport("zigwin32", zigwin32.module("zigwin32"));
+    lib.addIncludePath(b.path("./vendor/minhook/include/"));
     lib.linkLibrary(minhook);
-    lib.addIncludePath(.{ .path = "./vendor/font8x8/" });
+    lib.addIncludePath(b.path("./vendor/font8x8/"));
     lib.linkLibC();
 
     // This declares intent for the library to be installed into the standard
@@ -61,11 +61,11 @@ pub fn build(b: *std.Build) void {
 
     const injector = b.addExecutable(.{
         .name = "motw",
-        .root_source_file = .{ .path = "src/injector/main.zig" },
+        .root_source_file = b.path("src/injector/main.zig"),
         .target = target,
         .optimize = optimize,
     });
-    injector.addModule("zigwin32", zigwin32.module("zigwin32"));
+    injector.root_module.addImport("zigwin32", zigwin32.module("zigwin32"));
     injector.linkLibC();
 
     // This declares intent for the executable to be installed into the
@@ -99,7 +99,7 @@ pub fn build(b: *std.Build) void {
     // Creates a step for unit testing. This only builds the test executable
     // but does not run it.
     const lib_unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -107,7 +107,7 @@ pub fn build(b: *std.Build) void {
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
 
     const exe_unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });

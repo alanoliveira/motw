@@ -24,7 +24,7 @@ pub fn inject(dll_path: []const u8, proc_name: []const u8) InjectorError!void {
     const dll_abs_path = std.fs.realpath(dll_path, &out_buffer) catch |e| {
         std.debug.print(">>> {s}\n", .{dll_path});
         return switch (e) {
-            std.os.RealPathError.FileNotFound => InjectorError.DllNotFound,
+            std.posix.RealPathError.FileNotFound => InjectorError.DllNotFound,
             else => InjectorError.UnknownError,
         };
     };
