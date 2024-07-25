@@ -223,6 +223,18 @@ pub const Command = packed struct {
         Right = 8,
         UpRight = 9,
         DownRight = 10,
+
+        pub fn mirror(self: Direction) Direction {
+            const raw_direction: u4 = @intFromEnum(self);
+            const l = raw_direction >> 2;
+            const r = raw_direction >> 3;
+            return @enumFromInt((raw_direction & 0b0011) | (l << 3 | r << 2));
+        }
+
+        test "Direction mirror" {
+            const t = @import("std").testing;
+            try t.expectEqual(Direction.UpLeft, Direction.UpRight.mirror());
+        }
     };
 
     direction: Direction = .Neutral,
@@ -248,7 +260,7 @@ pub const Command = packed struct {
         try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .Neutral }, Command.fromRaw(0xFF));
         try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .Up }, Command.fromRaw(0xFE));
         try t.expectEqual(Command{ .a = false, .b = false, .c = false, .d = false, .direction = .UpRight }, Command.fromRaw(0xF6));
-        try t.expectEqual(Command{ .a = true, .b = false, .c = false, .d = false, .direction = .DownLeft }, Command.fromRaw(0xE5));
+        try t.expectEqual(Command{ .a = true, .b = false, .c = false, .d = false, .direction = .DownRight }, Command.fromRaw(0xE5));
         try t.expectEqual(Command{ .a = false, .b = false, .c = true, .d = true, .direction = .Right }, Command.fromRaw(0x37));
     }
 };
@@ -318,4 +330,8 @@ test "writeM64KInt" {
     data = [_]u8{ 0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6 };
     writeM64KInt(u32, @ptrCast(ptr + 1), 0xFFFFFFFF);
     try t.expectEqual([_]u8{ 0xFF, 0xB2, 0xFF, 0xFF, 0xE5, 0xFF }, data);
+}
+
+test {
+    std.testing.refAllDecls(@This());
 }
