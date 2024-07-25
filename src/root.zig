@@ -120,7 +120,7 @@ pub fn shutdown() void {
         0,
         @ptrCast(&win.FreeLibrary),
         @import("root").SELF_HANDLE,
-        .THREAD_CREATE_RUN_IMMEDIATELY,
+        win.THREAD_CREATE_RUN_IMMEDIATELY,
         null,
     );
     if (handle == null) {
@@ -133,14 +133,14 @@ pub fn shutdown() void {
 
 fn getD3d9EndScenePtr() ?std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndScene) {
     const d3d9 = win.Direct3DCreate9(win.D3D_SDK_VERSION) orelse return null;
-    defer _ = d3d9.IUnknown_Release();
+    defer _ = d3d9.IUnknown.Release();
 
     var present_params: win.D3DPRESENT_PARAMETERS = std.mem.zeroes(win.D3DPRESENT_PARAMETERS);
     present_params.Windowed = win.TRUE;
     present_params.SwapEffect = win.D3DSWAPEFFECT_DISCARD;
 
     var device: ?*win.IDirect3DDevice9 = null;
-    if (d3d9.IDirect3D9_CreateDevice(
+    if (d3d9.CreateDevice(
         win.D3DADAPTER_DEFAULT,
         win.D3DDEVTYPE_HAL,
         win.GetDesktopWindow(),
@@ -148,7 +148,7 @@ fn getD3d9EndScenePtr() ?std.meta.FieldType(win.IDirect3DDevice9.VTable, .EndSce
         &present_params,
         &device,
     ) != win.S_OK) return null;
-    defer _ = device.?.IUnknown_Release();
+    defer _ = device.?.IUnknown.Release();
 
     return @ptrCast(device.?.vtable.EndScene);
 }
