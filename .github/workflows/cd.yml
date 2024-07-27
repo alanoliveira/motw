@@ -1,7 +1,7 @@
 name: Continuous Deployment
 
 on:
-  push:
+  create:
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
           version: 0.13.0
       - uses: actions/checkout@v3
       - name: Building
-        run: zig build
+        run: zig build --release=fast
       - name: Packaging final binary
         run: |
           cd zig-out/
