@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/alanoliveira/motw/compare/v1.0.0...v1.1.0) (2024-07-27)
+
+
+### Features
+
+* add an option to disable hitbox view ([d41624a](https://github.com/alanoliveira/motw/commit/d41624a27cc07058fbfc79302893acb1a9fb65c6))
+
+
+### Bug Fixes
+
+* when replaying inputs mirror directions if necessary ([ea64a25](https://github.com/alanoliveira/motw/commit/ea64a256d455a10b4a82f965e46f05c90e61adb6))
+
 ## 1.0.0 (2023-12-11)
 
 
