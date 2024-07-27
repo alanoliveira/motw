@@ -1,5 +1,6 @@
 const std = @import("std");
 const emu = @import("emulator.zig");
+const game = @import("game.zig");
 const view = @import("view.zig");
 const Command = emu.Command;
 
@@ -14,6 +15,7 @@ const Slot = struct {
     const MAX_LENGTH = 0x1000;
 
     commands: [MAX_LENGTH]Command = undefined,
+    is_facing_right: bool = undefined,
     size: usize = 0,
 
     fn push(self: *Slot, command: Command) bool {
@@ -56,10 +58,13 @@ pub fn process() void {
             view.drawText(view.Text.new("REC {d}", .{buffer.size}, 0, 50, 0xFFFF0000), .{});
         },
         .Replay => {
-            const recorded = buffer.pop() orelse {
+            var recorded = buffer.pop() orelse {
                 stopReplay();
                 return;
             };
+            if (isDummyFacingRigt() != buffer.is_facing_right) {
+                recorded.direction = recorded.direction.mirror();
+            }
             emu.setCommand(.P2, recorded);
             view.drawText(view.Text.new("PLAY {d}", .{buffer.size}, 0, 50, 0xFF00FF00), .{});
         },
@@ -95,6 +100,7 @@ fn prepareRecording() void {
 
 fn startRecording() void {
     buffer.size = 0;
+    buffer.is_facing_right = isDummyFacingRigt();
     status = .Recording;
 }
 
@@ -122,6 +128,14 @@ fn swapCommands() void {
     const temp = emu.getCommand(.P1);
     emu.setCommand(.P1, emu.getCommand(.P2));
     emu.setCommand(.P2, temp);
+}
+
+fn isDummyFacingRigt() bool {
+    return game.getObject(.{ .Constant = .P2 }).?.isFacingRight();
+}
+
+fn swapCommandDirection(command: Command) Command {
+    return command;
 }
 
 pub const State = struct {
