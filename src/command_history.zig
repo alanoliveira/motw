@@ -2,7 +2,7 @@ const std = @import("std");
 const emu = @import("emulator.zig");
 const util = @import("util.zig");
 const view = @import("view.zig");
-const BUTTON_DISPLAY = std.ComptimeStringMap(struct { color: u32, label: []const u8 }, .{
+const BUTTON_DISPLAY = std.StaticStringMap(struct { color: u32, label: []const u8 }).initComptime(.{
     .{ "a", .{ .color = 0xFFFF0000, .label = "A" } },
     .{ "b", .{ .color = 0xFFFFFF00, .label = "B" } },
     .{ "c", .{ .color = 0xFF00FF00, .label = "C" } },
