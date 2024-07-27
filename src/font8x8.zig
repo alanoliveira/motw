@@ -14,7 +14,7 @@ sprite: ?*win.ID3DXSprite,
 
 pub fn initialize(device: *win.IDirect3DDevice9) !Self {
     var texture: ?*win.IDirect3DTexture9 = null;
-    if (device.IDirect3DDevice9_CreateTexture(
+    if (device.CreateTexture(
         8,
         8 * (128 + SYMBOLS_BMP.len),
         1,
@@ -24,7 +24,7 @@ pub fn initialize(device: *win.IDirect3DDevice9) !Self {
         &texture,
         null,
     ) != win.S_OK) return error.CreateTextureError;
-    errdefer _ = texture.?.IUnknown_Release();
+    errdefer _ = texture.?.IUnknown.Release();
 
     var surface: ?*win.IDirect3DSurface9 = null;
     if (texture.?.vtable.GetSurfaceLevel(texture.?, 0, &surface) != win.S_OK) {
@@ -88,18 +88,18 @@ pub fn drawText(self: *const Self, text: []const u8, x: f32, y: f32, color: u32)
     var magfilter: u32 = 0;
     var minfilter: u32 = 0;
     var mipfilter: u32 = 0;
-    _ = device.IDirect3DDevice9_GetSamplerState(0, .MAGFILTER, @ptrCast(&magfilter));
-    _ = device.IDirect3DDevice9_GetSamplerState(0, .MINFILTER, @ptrCast(&minfilter));
-    _ = device.IDirect3DDevice9_GetSamplerState(0, .MIPFILTER, @ptrCast(&mipfilter));
+    _ = device.GetSamplerState(0, .MAGFILTER, @ptrCast(&magfilter));
+    _ = device.GetSamplerState(0, .MINFILTER, @ptrCast(&minfilter));
+    _ = device.GetSamplerState(0, .MIPFILTER, @ptrCast(&mipfilter));
 
     if (sprite.lpVtbl.*.Begin.?(sprite, win.D3DXSPRITE_DONOTSAVESTATE) != win.S_OK) {
         std.debug.print("Error on sprite.Begin\n", .{});
     }
 
     // do not smooth the pixels
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MAGFILTER, @intFromEnum(win.D3DTEXF_NONE));
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MINFILTER, @intFromEnum(win.D3DTEXF_NONE));
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MIPFILTER, @intFromEnum(win.D3DTEXF_NONE));
+    _ = device.SetSamplerState(0, .MAGFILTER, @intFromEnum(win.D3DTEXF_NONE));
+    _ = device.SetSamplerState(0, .MINFILTER, @intFromEnum(win.D3DTEXF_NONE));
+    _ = device.SetSamplerState(0, .MIPFILTER, @intFromEnum(win.D3DTEXF_NONE));
 
     var pos_x = x;
     var pos_y = y;
@@ -130,14 +130,14 @@ pub fn drawText(self: *const Self, text: []const u8, x: f32, y: f32, color: u32)
         std.debug.print("Error on sprite.End\n", .{});
     }
 
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MAGFILTER, magfilter);
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MINFILTER, minfilter);
-    _ = device.IDirect3DDevice9_SetSamplerState(0, .MIPFILTER, mipfilter);
+    _ = device.SetSamplerState(0, .MAGFILTER, magfilter);
+    _ = device.SetSamplerState(0, .MINFILTER, minfilter);
+    _ = device.SetSamplerState(0, .MIPFILTER, mipfilter);
 }
 
 pub fn deinitialize(self: *Self) void {
     if (self.sprite) |s| _ = s.lpVtbl.*.Release.?(s);
-    if (self.texture) |t| _ = t.IUnknown_Release();
+    if (self.texture) |t| _ = t.IUnknown.Release();
 }
 
 const SYMBOLS_BMP = [_][8]u8{
